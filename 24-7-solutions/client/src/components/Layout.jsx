@@ -13,7 +13,7 @@ function Layout() {
       <footer className="border-t border-white/10 py-8">
         <div className="mx-auto flex w-full max-w-6xl flex-col justify-between gap-2 px-5 text-sm text-slate-300 sm:flex-row sm:px-8 lg:px-12">
           <p>Solutions 24/7</p>
-          <p>Weby | Hosting | Web aplikace | Jine</p>
+          <p>Weby | Hosting | Webové aplikace | Jiné</p>
         </div>
       </footer>
     </div>

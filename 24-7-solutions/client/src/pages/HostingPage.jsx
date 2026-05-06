@@ -3,25 +3,25 @@ import PlanGrid from '../components/PlanGrid'
 
 const plans = [
   {
-    tag: 'Zaklad',
-    name: 'Zakladni hosting',
-    price: '390 Kc / mesic',
-    desc: 'Pro mensi web, ktery ma stabilne bezet.',
-    items: ['Bezpecne pripojeni', 'Pravidelne zalohy', 'Hlidaní dostupnosti webu'],
+    tag: 'Základ',
+    name: 'Hosting Start',
+    price: '170 Kc / mesic',
+    desc: 'Jasný základ pro menší web. Bez složitostí.',
+    items: ['1 web', 'Úložiště 10 GB', '5 e-mailových schránek'],
   },
   {
-    tag: 'Oblibene',
-    name: 'Firemni hosting',
-    price: '790 Kc / mesic',
-    desc: 'Pro firemni weby s vyssi navstevnosti.',
-    items: ['Vyssi rychlost', 'Lepsi nacitani pro navstevniky', 'Rychla podpora'],
+    tag: 'Oblíbené',
+    name: 'Hosting Business',
+    price: '370 Kc / mesic',
+    desc: 'Nejlepší volba pro běžný firemní web.',
+    items: ['1 web + 1 testovací verze', 'Úložiště 30 GB', '20 e-mailových schránek'],
   },
   {
-    tag: 'Na miru',
-    name: 'Velky provoz',
-    price: 'od 1 490 Kc / mesic',
-    desc: 'Pro weby, ktere maji hodne navstevniku.',
-    items: ['Stabilita i ve spicce', 'Podrobne hlidani', 'Prednostni podpora'],
+    tag: 'Na míru',
+    name: 'Hosting Premium',
+    price: 'od 740 Kc / mesic',
+    desc: 'Pro větší projekty a více webů.',
+    items: ['Až 3 weby', 'Úložiště 100 GB', '50 e-mailových schránek'],
   },
 ]
 
@@ -30,8 +30,8 @@ function HostingPage() {
     <>
       <PageHeader
         eyebrow="Hosting"
-        title="Aby web bez problemu bezel"
-        text="Postarame se o provoz, bezpeci i zalohy. Nemusite resit technicke veci."
+        title="Hosting, který se vám vyplatí"
+        text="Přesně víte, co dostanete za cenu. Žádná technická omáčka, jen jasné limity a podpora."
       />
       <PlanGrid plans={plans} />
     </>

@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 
 const navItems = [
-  { to: '/', label: 'Hlavni' },
+  { to: '/', label: 'Hlavní' },
   { to: '/weby', label: 'Weby' },
   { to: '/hosting', label: 'Hosting' },
-  { to: '/web-aplikace', label: 'Web aplikace' },
-  { to: '/jine', label: 'Jine' },
+  { to: '/web-aplikace', label: 'Webové aplikace' },
+  { to: '/jine', label: 'Jiné' },
 ]
 
 function Topbar() {

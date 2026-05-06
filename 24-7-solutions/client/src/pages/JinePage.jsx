@@ -3,25 +3,25 @@ import PlanGrid from '../components/PlanGrid'
 
 const plans = [
   {
-    tag: 'Navrh',
-    name: 'Navrh vzhledu webu',
-    price: 'od 19 900 Kc',
-    desc: 'Kdyz chcete moderni a prehledny vzhled.',
-    items: ['Navrh rozlozeni', 'Jednoduche ovladani', 'Ukazka pred vyvojem'],
+    tag: 'Návrh',
+    name: 'Návrh vzhledu webu',
+    price: 'od 2 900 Kc',
+    desc: 'V návrhu připravíme jasný základ pro celý web.',
+    items: ['Struktura', 'Design', 'Layout'],
   },
   {
-    tag: 'Uspora casu',
-    name: 'Automatizace rutinnich cinnosti',
-    price: 'od 29 900 Kc',
-    desc: 'Co dnes delate rucne, muze bezet automaticky.',
-    items: ['Zjistime co brzdi praci', 'Navrhneme jednodussi postup', 'Nastavime automaticke kroky'],
+    tag: 'Úspora času',
+    name: 'Automatizace rutinních činností',
+    price: 'od 7 400 Kc',
+    desc: 'Ruční kroky převedeme na automatický proces.',
+    items: ['1 konkrétní proces', 'Napojení na 1 nástroj', 'Předání do 14 dní'],
   },
   {
     tag: 'Podpora',
-    name: 'Prubezna pomoc',
-    price: 'od 9 900 Kc / mesic',
-    desc: 'Kdyz nechcete resit web sami a potrebujete partnera.',
-    items: ['Pravidelne upravy', 'Rychla pomoc pri problemu', 'Doporuceni co zlepsit'],
+    name: 'Průběžná pomoc',
+    price: '250 Kc / hod',
+    desc: 'Pravidelná správa a úpravy bez starostí.',
+    items: ['24/7 podpora', 'Reakce do 24 hodin', 'Sjednání schůzky osobně'],
   },
 ]
 
@@ -29,9 +29,9 @@ function JinePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Jine"
-        title="Dalsi sluzby"
-        text="Pokud potrebujete neco navic, pripravime jednoduchy plan na miru i s jasnou cenou."
+        eyebrow="Jiné"
+        title="Další služby"
+        text="Pokud potřebujete něco navíc, připravíme jednoduchý plán na míru i s jasnou cenou."
       />
       <PlanGrid plans={plans} />
     </>
