@@ -5,6 +5,7 @@ import WebyPage from './pages/WebyPage'
 import HostingPage from './pages/HostingPage'
 import WebAplikacePage from './pages/WebAplikacePage'
 import JinePage from './pages/JinePage'
+import KurzyPage from './pages/KurzyPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
           <Route path="weby" element={<WebyPage />} />
           <Route path="hosting" element={<HostingPage />} />
           <Route path="web-aplikace" element={<WebAplikacePage />} />
+          <Route path="kurzy" element={<KurzyPage />} />
           <Route path="jine" element={<JinePage />} />
           <Route path="home" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NotFoundPage />} />

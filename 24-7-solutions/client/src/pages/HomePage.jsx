@@ -119,6 +119,7 @@ function HomePage() {
             Vyberte v menu nebo klikněte rovnou na: <Link className="text-cyan-200 underline" to="/weby">Weby</Link>,{' '}
             <Link className="text-cyan-200 underline" to="/hosting">Hosting</Link>,{' '}
             <Link className="text-cyan-200 underline" to="/web-aplikace">Webové aplikace</Link>,{' '}
+            <Link className="text-cyan-200 underline" to="/kurzy">Kurzy</Link>,{' '}
             <Link className="text-cyan-200 underline" to="/jine">Jiné</Link>.
           </p>
         </div>

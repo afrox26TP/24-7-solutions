@@ -6,6 +6,7 @@ const navItems = [
   { to: '/weby', label: 'Weby' },
   { to: '/hosting', label: 'Hosting' },
   { to: '/web-aplikace', label: 'Webové aplikace' },
+  { to: '/kurzy', label: 'Kurzy' },
   { to: '/jine', label: 'Jiné' },
 ]
 
