@@ -6,6 +6,7 @@ const BACKGROUND_OPTIONS = [
   { id: 'ocean', label: 'Ocean' },
   { id: 'forest', label: 'Forest' },
   { id: 'grid', label: 'Grid' },
+  { id: 'midnight', label: 'Midnight' },
 ]
 
 const DEFAULT_COMPONENT_STYLE = {
@@ -77,6 +78,23 @@ const COMPONENT_STYLE_PRESETS = {
     hoverShadow: false,
     animation: 'fade',
     fontFamily: 'inherit',
+  },
+  midnight: {
+    textColor: '#dbe7e4',
+    backgroundColor: '#121a20',
+    borderColor: '#26363d',
+    hoverColor: '#41d17d',
+    fontSize: 16,
+    fontWeight: 450,
+    lineHeight: 1.6,
+    letterSpacing: 0,
+    padding: 10,
+    radius: 18,
+    opacity: 100,
+    hoverScale: 1.015,
+    hoverShadow: true,
+    animation: 'fade',
+    fontFamily: "'Segoe UI', sans-serif",
   },
 }
 
@@ -439,6 +457,7 @@ function buildStaticExportHtml(snapshot) {
       .preview-bg-ocean { background: linear-gradient(160deg, #e0f2fe 0%, #ecfeff 100%); }
       .preview-bg-forest { background: linear-gradient(160deg, #e6f4ea 0%, #f0fdf4 100%); }
       .preview-bg-grid { background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px); background-size: 24px 24px; background-color: #fff; }
+      .preview-bg-midnight { background: radial-gradient(circle at 80% 4%, rgba(65, 209, 125, .15), transparent 27%), radial-gradient(circle at 8% 35%, rgba(31, 125, 83, .11), transparent 25%), #080d11; box-shadow: inset 0 0 0 1px #1d2b31; }
       .preview-bg-custom { background: var(--preview-custom-bg, #ffffff); }
       .preview-component { border: 1px solid var(--component-border-color, var(--preview-border)); border-radius: var(--component-radius, var(--preview-radius)); background: var(--component-bg-color, var(--preview-card-bg)); }
       .preview-component-body { padding: calc(16px + var(--component-padding, 0px)); color: var(--component-text-color, var(--preview-text)); font-size: var(--component-font-size, 16px); font-weight: var(--component-font-weight, 400); line-height: var(--component-line-height, 1.5); letter-spacing: var(--component-letter-spacing, 0px); opacity: var(--component-opacity, 1); font-family: var(--component-font-family, inherit); }
@@ -471,6 +490,18 @@ function buildStaticExportHtml(snapshot) {
       .preview-newsletter { display: grid; grid-template-columns: 1fr auto; gap: 14px 24px; align-items: center; padding: 28px; border-radius: var(--preview-radius); background: color-mix(in srgb, var(--preview-accent) 10%, white); } .preview-newsletter h3 { margin: 0; } .preview-newsletter form { display: flex; } .preview-newsletter input { min-width: 240px; padding: 11px; border: 1px solid var(--preview-border); border-radius: var(--preview-button-radius) 0 0 var(--preview-button-radius); } .preview-newsletter button { padding: 11px 16px; border: 0; border-radius: 0 var(--preview-button-radius) var(--preview-button-radius) 0; background: var(--preview-accent); color: #fff; } .preview-newsletter small { grid-column: 1 / -1; color: #64748b; }
       .preview-split-cta > div > span { color: #93c5fd; font-weight: 700; } .preview-split-cta a { display: inline-block; margin: 12px 8px 0 0; padding: 11px 14px; border-radius: var(--preview-button-radius); background: var(--preview-accent); color: #fff; text-decoration: none; } .preview-split-cta a.is-secondary { border: 1px solid #64748b; background: transparent; }
       .preview-marquee { overflow: hidden; text-align: center; } .preview-marquee > p { color: #64748b; font-size: 13px; text-transform: uppercase; letter-spacing: .12em; } .preview-marquee > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; } .preview-marquee strong { padding: 12px 18px; border: 1px solid var(--preview-border); border-radius: 999px; background: var(--preview-card-bg); }
+      .preview-bg-midnight .preview-component { box-shadow: 0 16px 50px rgba(0, 0, 0, .18); }
+      .preview-bg-midnight :is(.preview-header, .preview-card, .preview-pricing-card, .preview-quote, .preview-accordion, .preview-alert, .preview-newsletter) { border-color: #26363d; background: linear-gradient(145deg, #151f25, #10171c); color: #dbe7e4; }
+      .preview-bg-midnight :is(h1, h2, h3, h4, strong, summary) { color: #f4fbf7; }
+      .preview-bg-midnight :is(p, li, small, span, figcaption, label, legend) { color: #aebfbb; }
+      .preview-bg-midnight :is(.preview-header a, .preview-footer a) { color: #8ce3ae; }
+      .preview-bg-midnight :is(input, textarea, select) { border-color: #33464e; background: #0b1216; color: #f4fbf7; }
+      .preview-bg-midnight .preview-button-group button { border-color: #315c43; background: #152a20; color: #8ce3ae; }
+      .preview-bg-midnight .preview-logo-row span { border-color: #2b4036; background: #111c17; color: #9de7b8; }
+      .preview-bg-midnight .preview-separator span { color: #6e8c81; } .preview-bg-midnight .preview-separator hr { border-color: #26363d; }
+      .preview-bg-midnight .preview-feature-list li::before { color: #41d17d; }
+      .preview-bg-midnight .preview-alert { border-color: #315c43; background: #10251a; color: #9de7b8; }
+      .preview-bg-midnight .preview-pricing-line strong { color: #41d17d; }
       .preview-cookie-popup { position: fixed; right: 16px; bottom: 16px; width: min(360px, calc(100vw - 32px)); z-index: 20; }
       .preview-cookie-popup div { display: flex; gap: 10px; margin-top: 12px; }
       .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
@@ -951,6 +982,28 @@ body {
   background-size: 24px 24px;
 }
 
+.preview-bg-midnight {
+  background:
+    radial-gradient(circle at 80% 4%, rgba(65, 209, 125, 0.15), transparent 27%),
+    radial-gradient(circle at 8% 35%, rgba(31, 125, 83, 0.11), transparent 25%),
+    #080d11;
+  box-shadow: inset 0 0 0 1px #1d2b31;
+}
+
+.preview-bg-midnight .preview-component { box-shadow: 0 16px 50px rgba(0, 0, 0, 0.18); }
+.preview-bg-midnight :is(.preview-header, .preview-card, .preview-pricing-card, .preview-quote, .preview-accordion, .preview-alert, .preview-newsletter) { border-color: #26363d; background: linear-gradient(145deg, #151f25, #10171c); color: #dbe7e4; }
+.preview-bg-midnight :is(h1, h2, h3, h4, strong, summary) { color: #f4fbf7; }
+.preview-bg-midnight :is(p, li, small, span, figcaption, label, legend) { color: #aebfbb; }
+.preview-bg-midnight :is(.preview-header a, .preview-footer a) { color: #8ce3ae; }
+.preview-bg-midnight :is(input, textarea, select) { border-color: #33464e; background: #0b1216; color: #f4fbf7; }
+.preview-bg-midnight .preview-button-group button { border-color: #315c43; background: #152a20; color: #8ce3ae; }
+.preview-bg-midnight .preview-logo-row span { border-color: #2b4036; background: #111c17; color: #9de7b8; }
+.preview-bg-midnight .preview-separator span { color: #6e8c81; }
+.preview-bg-midnight .preview-separator hr { border-color: #26363d; }
+.preview-bg-midnight .preview-feature-list li::before { color: #41d17d; }
+.preview-bg-midnight .preview-alert { border-color: #315c43; background: #10251a; color: #9de7b8; }
+.preview-bg-midnight .preview-pricing-line strong { color: #41d17d; }
+
 @media (max-width: 900px) {
   .preview-canvas {
     margin: 0;
@@ -1343,7 +1396,8 @@ function renderBlock(block, state, onStateChange) {
   }
 
   if (type === 'faq-list') {
-    return <div key={block.id} className="preview-faq-list">{toList(props.items).map((item, index) => { const [question = '', answer = ''] = item.split('|').map((part) => part.trim()); return <details key={index} defaultOpen={index === 0 && props.firstOpen}><summary>{question}</summary><p>{answer}</p></details> })}</div>
+    const openItems = getStateValue('openItems', props.firstOpen ? [0] : [])
+    return <div key={block.id} className="preview-faq-list">{toList(props.items).map((item, index) => { const [question = '', answer = ''] = item.split('|').map((part) => part.trim()); const isOpen = openItems.includes(index); return <details key={index} open={isOpen} onToggle={(event) => { const shouldOpen = event.currentTarget.open; onStateChange({ openItems: shouldOpen ? [...new Set([...openItems, index])] : openItems.filter((itemIndex) => itemIndex !== index) }) }}><summary>{question}</summary><p>{answer}</p></details> })}</div>
   }
 
   if (type === 'team-grid') {
@@ -2326,6 +2380,64 @@ const PREMADE_SECTIONS = [
       { type: 'footer', props: { brand: 'Vita Klinika', note: 'Karlovo namesti 8, Praha | Po-Pa 7:00-19:00 | recepce@vitaklinika.cz', links: 'Pacientsky portal, Pojistovny, Dokumenty, Ochrana udaju' } },
     ],
   },
+  {
+    id: 'full-home-assistant-green',
+    label: 'FLAGSHIP Home Assistant Green',
+    description: 'Vlajkova tmava produktova sablona pro chytrou domacnost, soukromi a lokalni automatizaci.',
+    backgroundId: 'midnight',
+    replaceExisting: true,
+    appearance: {
+      textColor: '#dbe7e4',
+      headingColor: '#f4fbf7',
+      accentColor: '#41d17d',
+      cardBg: '#121a20',
+      borderColor: '#26363d',
+      radius: 18,
+      gap: 18,
+      buttonRadius: 12,
+      canvasWidth: 1120,
+    },
+    componentPreset: 'midnight',
+    blocks: [
+      { type: 'header', props: { brand: 'HOME ASSISTANT GREEN', links: 'Proc Green, Moznosti, Parametry, Soukromi, FAQ', cta: 'Koupit Green' } },
+      { type: 'hero-banner', props: { eyebrow: 'OPEN HOME. LOCAL FIRST.', title: 'Vas chytry domov. Opravdu vas.', subtitle: 'Home Assistant Green je nejjednodussi cesta k otevrene chytre domacnosti. Vsechny automatizace, zarizeni a data sjednoti v jednom rychlem, tichém a soukromem centru.', src: 'https://www.home-assistant.io/images/green/ha-green-photo-front-p-1080.jpg', cta: 'Upgradovat chytry domov', href: '#koupit' } },
+      { type: 'marquee', props: { label: 'Jeden domov. Tisice moznosti.', items: 'Philips Hue, IKEA, Sonos, Shelly, HomeKit, Google Home, SmartThings, ESPHome' } },
+      { type: 'stats-grid', props: { items: '1000+|Integraci|pripravenych v Home Assistantu, 1.8 GHz|Quad-core ARM|rychla lokalni odezva, 4 GB|LPDDR4X RAM|plynuly provoz automatizaci, ~1.7 W|Spotreba v klidu|chytry domov bez plytvani' } },
+      { type: 'separator', props: { text: 'Chytry domov bez kompromisu' } },
+      { type: 'heading', props: { text: 'Jedno misto pro vse, co doma pouzivate' } },
+      { type: 'subheading', props: { text: 'Svetla, topeni, energie, zabezpeceni, media i zahrada. Green propoji ruzne znacky do jednoho srozumitelneho rozhrani a necha je spolupracovat podle vasich pravidel.' } },
+      { type: 'tabs', props: { items: 'Prehled|Vsechny mistnosti zarizeni a sceny mate na jednom dashboardu dostupnem z mobilu tabletu i pocitace., Automatizace|Vytvarejte jednoducha pravidla i komplexni scenare podle casu pritomnosti pocasi spotreby nebo libovolneho senzoru., Energie|Sledujte vyrobu spotrebu i jednotliva zarizeni a objevte kde lze setrit bez omezeni pohodli., Hlas|Propojte stavajici hlasove asistenty nebo budujte lokalni hlasove ovladani s Home Assistant Voice.' } },
+      { type: 'gallery-grid', props: { images: 'https://www.home-assistant.io/images/green/ha-green-setup-0-p-800.jpg, https://www.home-assistant.io/images/green/ha-green-setup-1-p-800.jpg, https://www.home-assistant.io/images/green/ha-green-photo-top-crop-p-800.jpg, https://www.home-assistant.io/images/green/ha-green-photo-back-p-800.jpg', alt: 'Home Assistant Green produkt a jednoduche nastaveni' } },
+      { type: 'separator', props: { text: 'Ready. Set. Go.' } },
+      { type: 'heading', props: { text: 'Od krabicky k chytrejsimu domovu ve trech krocich' } },
+      { type: 'timeline', props: { items: '01|Zapojte Green|Pripojte napajeni a dodavany gigabitovy ethernetovy kabel. Home Assistant je uz nainstalovany., 02|Otevrete aplikaci|Mobilni nebo webova aplikace vas bezpečně provede prvnim nastavenim a vytvorenim domova., 03|Objevte zarizeni|Home Assistant automaticky zacne hledat kompatibilni zarizeni ve vasi siti. Vyberte co chcete propojit., 04|Vytvorte prvni automatizaci|Rozsvitte pri prichodu ztlumte topeni pri otevrenem okne nebo hlidejte spotrebu. Pravidla urcujete vy.' } },
+      { type: 'split-cta', props: { badge: 'PLUG & PLAY', title: 'Home Assistant je uz uvnitr', text: 'Zadne skladani pocitace, zapisovani systemu na kartu ani prikazova radka. Green je navrzen jako hotovy spotrebic, ktery muzete postupne rozsirovat spolu se svym domovem.', primary: 'Podivat se na instalaci', secondary: 'Prozkoumat dokumentaci' } },
+      { type: 'separator', props: { text: 'Vykon v kompaktnim tele' } },
+      { type: 'heading', props: { text: 'Tichy hardware postaveny pro nepretrzity provoz' } },
+      { type: 'image', props: { src: 'https://www.home-assistant.io/images/green/ha-green-exploded-view-p-800.png', alt: 'Rozlozeny pohled na hardware Home Assistant Green' } },
+      { type: 'comparison-table', props: { headers: 'Vlastnost, Home Assistant Green, Co to znamena doma', rows: 'Procesor|Rockchip RK3566 quad-core ARM 1.8 GHz|Rychle automatizace a plynule rozhrani;Pamet|4 GB LPDDR4X|Dostatek prostoru pro integrace a doplnky;Uloziste|32 GB eMMC|Spolehlivejsi nez bezna microSD karta;Sit|Gigabit Ethernet|Stabilni komunikace bez vypadku Wi-Fi;Rozsireni|2x USB 2.0|Zigbee Thread Z-Wave a dalsi adaptery;Chlazeni|Velky hlinikovy pasiv|Tichy provoz bez ventilatoru;Spotreba|~1.7 W idle / ~3 W load|Nizke provozni naklady 24/7;Rozmery|112 x 112 x 32 mm|Nenapadne centrum pro kazdou domacnost' } },
+      { type: 'feature-list', props: { items: 'Polopruhledne polykarbonatove telo, Stavove LED pro napajeni aktivitu a zdravi systemu, HDMI pro diagnosticke ucely, MicroSD slot pro obnovu systemu, Univerzalni 12V napajeci zdroj s EU US a UK adaptery, Gigabitovy ethernetovy kabel v baleni' } },
+      { type: 'separator', props: { text: 'Funguje s tim, co uz mate' } },
+      { type: 'heading', props: { text: 'Nemusite menit cely domov najednou' } },
+      { type: 'text', props: { text: 'Home Assistant muze doplnit vase soucasne ekosystemy a dovolit postupny prechod vlastnim tempem. Propojte Apple HomeKit, Google Home, Amazon Alexa nebo Samsung SmartThings a rozhodnete se, ktera cast domova ma zustat v cloudu a ktera se ma presunout pod lokalni kontrolu.' } },
+      { type: 'card', props: { title: 'Zigbee a Thread', content: 'Pridejte Home Assistant Connect ZBT-2 a ovladejte lokalne senzory, svetla, zasuvky a dalsi kompatibilni zarizeni bez ciziho hubu.' } },
+      { type: 'card', props: { title: 'Z-Wave a dalsi standardy', content: 'Dva USB porty umozni doplnit adapter pro Z-Wave, Bluetooth nebo jine technologie podle toho, jak se vas domov vyviji.' } },
+      { type: 'card', props: { title: 'Home Assistant Cloud', content: 'Volitelna sluzba usnadni bezpecny vzdaleny pristup a napojeni hlasovych asistentu. Lokalni funkce Green ale nejsou podmineny predplatnym.' } },
+      { type: 'separator', props: { text: 'Built for trust' } },
+      { type: 'heading', props: { text: 'Vase data zustavaji doma' } },
+      { type: 'subheading', props: { text: 'Automatizace nemusi prestat fungovat pri vypadku internetu. Home Assistant zpracovava data lokalne, neposila vase navyky reklamnim platformam a dava vam kontrolu nad tim, co opousti domaci sit.' } },
+      { type: 'stats-grid', props: { items: 'LOCAL|Data pod vasi strechou|bez povinneho cloudu, PRIVATE|Zadne obchodovani s navyky|vy rozhodujete o sdileni, RESILIENT|Automatizace i bez internetu|domov zustava funkcni, OPEN|Open-source ekosystem|transparentni a komunitne vyvijeny' } },
+      { type: 'quote', props: { text: 'Chytry domov nema byt soubor vzdalenych sluzeb, ktere vas mohou kdykoliv odriznout. Ma byt soucasti vaseho domova: lokalni, otevreny a pod vasi kontrolou.', author: 'Princip Open Home' } },
+      { type: 'separator', props: { text: 'Skvela kvalita. Ferova cena.' } },
+      { type: 'pricing-card', props: { plan: 'Home Assistant Green', price: '€179', period: 'doporucena cena', features: 'Home Assistant Green hub, Predinstalovany Home Assistant, Gigabitovy ethernetovy kabel, Univerzalni 12V napajeci zdroj, EU US a UK adaptery, Quick Start Guide', cta: 'Najit prodejce' } },
+      { type: 'alert', props: { text: 'Kazdy nakup podporuje Open Home. Nabu Casa odvadi vetsinu zisku Open Home Foundation a pomaha financovat vyvoj Home Assistantu a ESPHome.' } },
+      { type: 'separator', props: { text: 'Nejcastejsi otazky' } },
+      { type: 'faq-list', props: { items: 'Je Green vhodny pro zacatecniky?|Ano. Je to nejjednodussi oficialni zpusob jak zacit s Home Assistantem. System je predinstalovany a prvnim nastavenim provede aplikace., Potrebuji predplatne?|Ne. Home Assistant Green i lokalni ovladani funguji bez povinneho predplatneho. Home Assistant Cloud je volitelny pro pohodlny vzdaleny pristup a vybrane hlasove asistenty., Ma Green Zigbee nebo Thread uvnitr?|Ne. Pro Zigbee a Thread muzete pridat Home Assistant Connect ZBT-2 do jednoho z USB portu., Bude domov fungovat bez internetu?|Lokalni integrace dashboardy a automatizace mohou fungovat i pri vypadku internetu. Cloudove sluzby tretich stran mohou pripojeni vyzadovat., Je Green dost vykonny pro bezny domov?|Quad-core procesor 4 GB RAM a 32 GB eMMC jsou navrzene pro rychly a plynuly provoz Home Assistantu v typicke chytre domacnosti., Mohu prejit z jine instalace?|Ano. Ze stavajici instalace Home Assistantu lze vytvorit zalohu a pri prvnim nastaveni ji na Green obnovit.', firstOpen: true } },
+      { type: 'newsletter', props: { title: 'Budte u dalsiho kroku Open Home', text: 'Novinky o Home Assistantu, oficialnim hardwaru a lokalnim chytrejsim domove.', placeholder: 'vas@email.cz', cta: 'Odebirat novinky', note: 'Komunitni novinky bez reklamniho sledovani.' } },
+      { type: 'contact-panel', props: { title: 'Uz mate Home Assistant Green?', text: 'Dokumentace, komunita a podpora vam pomohou s prvnim spustenim, migraci i pokrocilymi automatizacemi.', address: 'Open Home Foundation', email: 'hello@home-assistant.io', phone: 'Community Forum', hours: 'Dokumentace dostupna 24/7' } },
+      { type: 'footer', props: { brand: 'HOME ASSISTANT GREEN', note: 'Designed by Nabu Casa. Powered by the Open Home community.', links: 'Dokumentace, GitHub, Community Forum, System Status, Soukromi' } },
+    ],
+  },
 ]
 
 const PREMADE_WEBS = PREMADE_SECTIONS.filter(
@@ -2774,11 +2886,13 @@ function renderPreviewBlock(block, state, onStateChange) {
   }
 
   if (type === 'faq-list') {
+    const openItems = getStateValue('openItems', props.firstOpen ? [0] : [])
     return (
       <div key={block.id} className="preview-faq-list">
         {toList(props.items).map((item, index) => {
           const [question = '', answer = ''] = item.split('|').map((part) => part.trim())
-          return <details key={index} defaultOpen={index === 0 && props.firstOpen}><summary>{question}</summary><p>{answer}</p></details>
+          const isOpen = openItems.includes(index)
+          return <details key={index} open={isOpen} onToggle={(event) => { const shouldOpen = event.currentTarget.open; onStateChange({ openItems: shouldOpen ? [...new Set([...openItems, index])] : openItems.filter((itemIndex) => itemIndex !== index) }) }}><summary>{question}</summary><p>{answer}</p></details>
         })}
       </div>
     )
@@ -3204,18 +3318,38 @@ function StudioApp() {
     const section = PREMADE_SECTIONS.find((item) => item.id === sectionId)
     if (!section) return
 
-    let firstCreatedId = null
+    const offset = section.replaceExisting ? 0 : blocks.length
+    const nextBlocks = section.blocks.map((template, index) =>
+      createBlockFromTemplate(template, offset + index),
+    )
+    const firstCreatedId = nextBlocks[0]?.id ?? null
 
-    setBlocks((prev) => {
-      const offset = prev.length
-      const nextBlocks = section.blocks.map((template, index) =>
-        createBlockFromTemplate(template, offset + index),
+    setBlocks((prev) => section.replaceExisting ? nextBlocks : [...prev, ...nextBlocks])
+
+    if (section.componentPreset && COMPONENT_STYLE_PRESETS[section.componentPreset]) {
+      const templateStyles = Object.fromEntries(
+        nextBlocks.map((block) => [block.id, { ...COMPONENT_STYLE_PRESETS[section.componentPreset] }]),
       )
+      setComponentStyles((prev) => section.replaceExisting ? templateStyles : { ...prev, ...templateStyles })
+    } else if (section.replaceExisting) {
+      setComponentStyles({})
+    }
 
-      firstCreatedId = nextBlocks[0]?.id ?? null
+    if (section.appearance) {
+      setAppearance((prev) => ({ ...prev, ...section.appearance }))
+    }
 
-      return [...prev, ...nextBlocks]
-    })
+    if (section.backgroundId) {
+      setBackgroundId(section.backgroundId)
+    }
+
+    if (section.customBackground) {
+      setCustomBackground(section.customBackground)
+    }
+
+    if (section.replaceExisting) {
+      setPreviewState({})
+    }
 
     if (firstCreatedId) {
       setSelectedBlockId(firstCreatedId)
@@ -3684,6 +3818,9 @@ function StudioApp() {
                 </button>
                 <button type="button" onClick={() => applyStylePresetToSelected('minimal')}>
                   Minimal
+                </button>
+                <button type="button" onClick={() => applyStylePresetToSelected('midnight')}>
+                  Midnight
                 </button>
               </div>
 

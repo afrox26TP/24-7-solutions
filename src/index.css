@@ -1942,6 +1942,84 @@ body {
   background-size: 24px 24px;
 }
 
+.preview-bg-midnight {
+  background:
+    radial-gradient(circle at 80% 4%, rgba(65, 209, 125, 0.15), transparent 27%),
+    radial-gradient(circle at 8% 35%, rgba(31, 125, 83, 0.11), transparent 25%),
+    #080d11;
+  box-shadow: inset 0 0 0 1px #1d2b31;
+}
+
+.preview-bg-midnight .preview-component {
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.18);
+}
+
+.preview-bg-midnight :is(
+    .preview-header,
+    .preview-card,
+    .preview-pricing-card,
+    .preview-quote,
+    .preview-accordion,
+    .preview-alert,
+    .preview-newsletter
+  ) {
+  border-color: #26363d;
+  background: linear-gradient(145deg, #151f25, #10171c);
+  color: #dbe7e4;
+}
+
+.preview-bg-midnight :is(h1, h2, h3, h4, strong, summary) {
+  color: #f4fbf7;
+}
+
+.preview-bg-midnight :is(p, li, small, span, figcaption, label, legend) {
+  color: #aebfbb;
+}
+
+.preview-bg-midnight :is(.preview-header a, .preview-footer a) {
+  color: #8ce3ae;
+}
+
+.preview-bg-midnight :is(input, textarea, select) {
+  border-color: #33464e;
+  background: #0b1216;
+  color: #f4fbf7;
+}
+
+.preview-bg-midnight .preview-button-group button {
+  border-color: #315c43;
+  background: #152a20;
+  color: #8ce3ae;
+}
+
+.preview-bg-midnight .preview-logo-row span {
+  border-color: #2b4036;
+  background: #111c17;
+  color: #9de7b8;
+}
+
+.preview-bg-midnight .preview-separator span {
+  color: #6e8c81;
+}
+
+.preview-bg-midnight .preview-separator hr {
+  border-color: #26363d;
+}
+
+.preview-bg-midnight .preview-feature-list li::before {
+  color: #41d17d;
+}
+
+.preview-bg-midnight .preview-alert {
+  border-color: #315c43;
+  background: #10251a;
+  color: #9de7b8;
+}
+
+.preview-bg-midnight .preview-pricing-line strong {
+  color: #41d17d;
+}
+
 .live-preview-page {
   min-height: 100vh;
   padding: 1rem;
