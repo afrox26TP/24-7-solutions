@@ -364,7 +364,7 @@ function buildStaticExportHtml(snapshot) {
       .preview-bg-custom { background: var(--preview-custom-bg, #ffffff); }
       .preview-component { border: 1px solid var(--component-border-color, var(--preview-border)); border-radius: var(--component-radius, var(--preview-radius)); background: var(--component-bg-color, var(--preview-card-bg)); }
       .preview-component-body { padding: calc(16px + var(--component-padding, 0px)); color: var(--component-text-color, var(--preview-text)); font-size: var(--component-font-size, 16px); font-weight: var(--component-font-weight, 400); line-height: var(--component-line-height, 1.5); letter-spacing: var(--component-letter-spacing, 0px); opacity: var(--component-opacity, 1); font-family: var(--component-font-family, inherit); }
-      .preview-component:hover { box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12); transform: scale(var(--component-hover-scale, 1.03)); transition: 200ms ease; }
+      .preview-component:hover { box-shadow: none; transform: none; transition: none; }
       .preview-component h1,.preview-component h2,.preview-component h3,.preview-component h4 { color: var(--preview-heading); margin: 0 0 10px; }
       .preview-component p { margin: 0; }
       .preview-button, .preview-button-group button, .preview-header button, .preview-pricing-card button, .preview-offer button, .preview-cookie-popup button { border: none; border-radius: var(--preview-button-radius); background: var(--preview-accent); color: #fff; padding: 10px 14px; cursor: pointer; text-decoration: none; display: inline-block; }
@@ -455,11 +455,11 @@ body {
 }
 
 .preview-component.has-hover-shadow:hover {
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  box-shadow: none;
 }
 
 .preview-component:hover {
-  transform: scale(var(--component-hover-scale, 1));
+  transform: none;
 }
 
 .preview-canvas h1,
