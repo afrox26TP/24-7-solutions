@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const BACKGROUND_OPTIONS = [
   { id: 'clean', label: 'Clean' },
@@ -78,6 +78,1255 @@ const COMPONENT_STYLE_PRESETS = {
     animation: 'fade',
     fontFamily: 'inherit',
   },
+}
+
+const PREVIEW_STORAGE_KEY = 'studio-live-preview-v1'
+
+function readSavedPreviewSnapshot() {
+  try {
+    const raw = window.localStorage.getItem(PREVIEW_STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function savePreviewSnapshot(snapshot) {
+  try {
+    window.localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(snapshot))
+  } catch {
+    // Ignore storage failures (private mode, quota, etc.)
+  }
+}
+
+function getPreviewStyle(appearance, customBackground) {
+  return {
+    '--preview-text': appearance.textColor,
+    '--preview-heading': appearance.headingColor,
+    '--preview-accent': appearance.accentColor,
+    '--preview-card-bg': appearance.cardBg,
+    '--preview-border': appearance.borderColor,
+    '--preview-radius': `${appearance.radius}px`,
+    '--preview-gap': `${appearance.gap}px`,
+    '--preview-button-radius': `${appearance.buttonRadius}px`,
+    '--preview-canvas-width': `${appearance.canvasWidth}px`,
+    '--preview-custom-bg': customBackground,
+  }
+}
+
+function getComponentCssVariables(styleConfig) {
+  const style = withDefaultComponentStyle(styleConfig)
+
+  return {
+    '--component-text-color': style.textColor,
+    '--component-bg-color': style.backgroundColor,
+    '--component-border-color': style.borderColor,
+    '--component-hover-color': style.hoverColor,
+    '--component-font-size': `${style.fontSize}px`,
+    '--component-font-weight': style.fontWeight,
+    '--component-line-height': style.lineHeight,
+    '--component-letter-spacing': `${style.letterSpacing}px`,
+    '--component-padding': `${style.padding}px`,
+    '--component-radius': `${style.radius}px`,
+    '--component-opacity': style.opacity / 100,
+    '--component-hover-scale': style.hoverScale,
+    '--component-font-family': style.fontFamily,
+  }
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+function renderStaticBlockSource(block) {
+  const { type, props } = block
+
+  if (type === 'heading') return `<h1>${escapeHtml(props.text)}</h1>`
+  if (type === 'subheading') return `<h2>${escapeHtml(props.text)}</h2>`
+  if (type === 'text') return `<p>${escapeHtml(props.text)}</p>`
+
+  if (type === 'header') {
+    const links = toList(props.links)
+      .map((link) => `<a href="#">${escapeHtml(link)}</a>`)
+      .join('')
+    return `<header class="preview-header"><strong>${escapeHtml(props.brand)}</strong><nav>${links}</nav><button type="button">${escapeHtml(props.cta)}</button></header>`
+  }
+
+  if (type === 'image') {
+    return `<img class="preview-image" src="${escapeHtml(props.src)}" alt="${escapeHtml(props.alt)}" loading="lazy" />`
+  }
+
+  if (type === 'video') {
+    return `<div class="preview-video-wrap"><iframe src="${escapeHtml(props.url)}" title="${escapeHtml(props.title)}" class="preview-video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`
+  }
+
+  if (type === 'button') {
+    return `<a class="preview-button" href="${escapeHtml(props.href)}">${escapeHtml(props.text)}</a>`
+  }
+
+  if (type === 'button-group') {
+    const items = toList(props.items)
+      .map((item) => `<button type="button">${escapeHtml(item)}</button>`)
+      .join('')
+    return `<div class="preview-button-group">${items}</div>`
+  }
+
+  if (type === 'accordion' || type === 'collapsible') {
+    const open = props.open ? ' open' : ''
+    return `<details class="preview-accordion"${open}><summary>${escapeHtml(props.title)}</summary><p>${escapeHtml(props.content)}</p></details>`
+  }
+
+  if (type === 'alert') return `<div class="preview-alert" role="alert">${escapeHtml(props.text)}</div>`
+
+  if (type === 'card') {
+    return `<article class="preview-card"><h3>${escapeHtml(props.title)}</h3><p>${escapeHtml(props.content)}</p></article>`
+  }
+
+  if (type === 'badge') return `<span class="preview-badge">${escapeHtml(props.text)}</span>`
+
+  if (type === 'avatar') {
+    return `<div class="preview-avatar"><img src="${escapeHtml(props.src)}" alt="${escapeHtml(props.name)}" /><span>${escapeHtml(props.name)}</span></div>`
+  }
+
+  if (type === 'checkbox') {
+    const checked = props.checked ? ' checked' : ''
+    return `<label class="preview-check"><input type="checkbox"${checked} /><span>${escapeHtml(props.label)}</span></label>`
+  }
+
+  if (type === 'input') {
+    return `<label class="preview-field"><span>${escapeHtml(props.label)}</span><input type="text" placeholder="${escapeHtml(props.placeholder)}" /></label>`
+  }
+
+  if (type === 'textarea') {
+    return `<label class="preview-field"><span>${escapeHtml(props.label)}</span><textarea rows="4" placeholder="${escapeHtml(props.placeholder)}"></textarea></label>`
+  }
+
+  if (type === 'select') {
+    const options = toList(props.options)
+      .map((option) => `<option>${escapeHtml(option)}</option>`)
+      .join('')
+    return `<label class="preview-field"><span>${escapeHtml(props.label)}</span><select>${options}</select></label>`
+  }
+
+  if (type === 'radio-group') {
+    const options = toList(props.options)
+      .map(
+        (option) =>
+          `<label><input type="radio" name="radio-${escapeHtml(block.id)}"${props.selected === option ? ' checked' : ''} /><span>${escapeHtml(option)}</span></label>`,
+      )
+      .join('')
+    return `<fieldset class="preview-radio-group"><legend>${escapeHtml(props.label)}</legend>${options}</fieldset>`
+  }
+
+  if (type === 'carousel') {
+    const slides = toList(props.images)
+      .map((image, index) => `<img src="${escapeHtml(image)}" alt="slide-${index + 1}" />`)
+      .join('')
+    return `<div class="preview-carousel">${slides}</div>`
+  }
+
+  if (type === 'chart') {
+    const bars = toList(props.values)
+      .map((value) => clampNumber(value, 0, 100, 0))
+      .map((value) => `<div style="height: ${value}%" title="${value}%"></div>`)
+      .join('')
+    return `<div class="preview-chart">${bars}</div>`
+  }
+
+  if (type === 'progress') {
+    const value = clampNumber(props.value, 0, 100, 0)
+    return `<div class="preview-progress-wrap"><span>${escapeHtml(props.label)}</span><progress max="100" value="${value}"></progress></div>`
+  }
+
+  if (type === 'separator') {
+    return `<div class="preview-separator"><hr /><span>${escapeHtml(props.text)}</span></div>`
+  }
+
+  if (type === 'aspect-ratio') {
+    const squareClass = String(props.ratio).trim() === '1/1' ? ' is-square' : ''
+    return `<div class="preview-aspect${squareClass}"><img src="${escapeHtml(props.src)}" alt="aspect content" /></div>`
+  }
+
+  if (type === 'quote') {
+    return `<figure class="preview-quote"><blockquote>&quot;${escapeHtml(props.text)}&quot;</blockquote><figcaption>${escapeHtml(props.author)}</figcaption></figure>`
+  }
+
+  if (type === 'logo-row') {
+    const items = toList(props.items)
+      .map((item) => `<span>${escapeHtml(item)}</span>`)
+      .join('')
+    return `<div class="preview-logo-row">${items}</div>`
+  }
+
+  if (type === 'kpi') {
+    return `<article class="preview-kpi"><strong>${escapeHtml(props.value)}</strong><p>${escapeHtml(props.label)}</p><small>${escapeHtml(props.note)}</small></article>`
+  }
+
+  if (type === 'pricing-card') {
+    const features = toList(props.features)
+      .map((feature) => `<li>${escapeHtml(feature)}</li>`)
+      .join('')
+    return `<article class="preview-pricing-card"><h3>${escapeHtml(props.plan)}</h3><p class="preview-pricing-line"><strong>${escapeHtml(props.price)}</strong><span>${escapeHtml(props.period)}</span></p><ul>${features}</ul><button type="button">${escapeHtml(props.cta)}</button></article>`
+  }
+
+  if (type === 'feature-list') {
+    const items = toList(props.items)
+      .map((item) => `<li>${escapeHtml(item)}</li>`)
+      .join('')
+    return `<ul class="preview-feature-list">${items}</ul>`
+  }
+
+  if (type === 'countdown') {
+    const days = clampNumber(props.days, 0, 365, 0)
+    const hours = clampNumber(props.hours, 0, 23, 0)
+    const minutes = clampNumber(props.minutes, 0, 59, 0)
+    return `<div class="preview-countdown"><p>${escapeHtml(props.label)}</p><div><span><strong>${days}</strong><small>dnu</small></span><span><strong>${hours}</strong><small>hod</small></span><span><strong>${minutes}</strong><small>min</small></span></div></div>`
+  }
+
+  if (type === 'limited-offer') {
+    return `<article class="preview-offer"><div><h3>${escapeHtml(props.title)}</h3><p>${escapeHtml(props.subtitle)}</p></div><code>${escapeHtml(props.code)}</code><button type="button">${escapeHtml(props.cta)}</button></article>`
+  }
+
+  if (type === 'cookie-popup') {
+    return `<aside class="preview-cookie-popup" role="dialog" aria-label="Cookie consent"><h4>${escapeHtml(props.title)}</h4><p>${escapeHtml(props.text)}</p><div><button type="button" data-cookie-close="1">${escapeHtml(props.reject)}</button><button type="button" class="is-primary" data-cookie-close="1">${escapeHtml(props.accept)}</button></div></aside>`
+  }
+
+  if (type === 'footer') {
+    const links = toList(props.links)
+      .map((link) => `<a href="#">${escapeHtml(link)}</a>`)
+      .join('')
+    return `<footer class="preview-footer"><strong>${escapeHtml(props.brand)}</strong><p>${escapeHtml(props.note)}</p><div>${links}</div></footer>`
+  }
+
+  return ''
+}
+
+function buildStaticExportHtml(snapshot) {
+  const appearance = snapshot.appearance ?? {
+    textColor: '#1f2937',
+    headingColor: '#0f172a',
+    accentColor: '#2563eb',
+    cardBg: '#ffffff',
+    borderColor: '#cbd5e1',
+    radius: 12,
+    gap: 14,
+    buttonRadius: 10,
+    canvasWidth: 920,
+  }
+  const backgroundId = snapshot.backgroundId ?? 'clean'
+  const customBackground = snapshot.customBackground ?? '#ffffff'
+  const blocks = Array.isArray(snapshot.blocks) ? snapshot.blocks : []
+
+  const cards = blocks
+    .map((block) => {
+      const styleVars = getComponentCssVariables((snapshot.componentStyles ?? {})[block.id])
+      const cssVars = Object.entries(styleVars)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('; ')
+      return `<section class="preview-component has-hover-shadow" style="${cssVars}"><div class="preview-component-body">${renderStaticBlockSource(block)}</div></section>`
+    })
+    .join('\n')
+
+  const customBackgroundStyle =
+    backgroundId === 'custom' ? ` style="--preview-custom-bg: ${escapeHtml(customBackground)}"` : ''
+
+  return `<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>247solutions Export</title>
+    <style>
+      :root {
+        --preview-text: ${appearance.textColor};
+        --preview-heading: ${appearance.headingColor};
+        --preview-accent: ${appearance.accentColor};
+        --preview-card-bg: ${appearance.cardBg};
+        --preview-border: ${appearance.borderColor};
+        --preview-radius: ${appearance.radius}px;
+        --preview-gap: ${appearance.gap}px;
+        --preview-button-radius: ${appearance.buttonRadius}px;
+        --preview-canvas-width: ${appearance.canvasWidth}px;
+      }
+      body { margin: 0; padding: 24px; font-family: 'Segoe UI', sans-serif; color: var(--preview-text); background: #f3f6fb; }
+      .preview-canvas { max-width: min(100%, var(--preview-canvas-width)); margin: 0 auto; display: grid; gap: var(--preview-gap); }
+      .preview-bg-clean { background: #ffffff; }
+      .preview-bg-sunset { background: linear-gradient(160deg, #fff4e6 0%, #ffe3e3 100%); }
+      .preview-bg-ocean { background: linear-gradient(160deg, #e0f2fe 0%, #ecfeff 100%); }
+      .preview-bg-forest { background: linear-gradient(160deg, #e6f4ea 0%, #f0fdf4 100%); }
+      .preview-bg-grid { background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px); background-size: 24px 24px; background-color: #fff; }
+      .preview-bg-custom { background: var(--preview-custom-bg, #ffffff); }
+      .preview-component { border: 1px solid var(--component-border-color, var(--preview-border)); border-radius: var(--component-radius, var(--preview-radius)); background: var(--component-bg-color, var(--preview-card-bg)); }
+      .preview-component-body { padding: calc(16px + var(--component-padding, 0px)); color: var(--component-text-color, var(--preview-text)); font-size: var(--component-font-size, 16px); font-weight: var(--component-font-weight, 400); line-height: var(--component-line-height, 1.5); letter-spacing: var(--component-letter-spacing, 0px); opacity: var(--component-opacity, 1); font-family: var(--component-font-family, inherit); }
+      .preview-component:hover { box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12); transform: scale(var(--component-hover-scale, 1.03)); transition: 200ms ease; }
+      .preview-component h1,.preview-component h2,.preview-component h3,.preview-component h4 { color: var(--preview-heading); margin: 0 0 10px; }
+      .preview-component p { margin: 0; }
+      .preview-button, .preview-button-group button, .preview-header button, .preview-pricing-card button, .preview-offer button, .preview-cookie-popup button { border: none; border-radius: var(--preview-button-radius); background: var(--preview-accent); color: #fff; padding: 10px 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+      .preview-button-group { display: flex; flex-wrap: wrap; gap: 10px; }
+      .preview-header, .preview-footer { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+      .preview-header nav, .preview-footer div { display: flex; gap: 12px; flex-wrap: wrap; }
+      .preview-image, .preview-aspect img, .preview-carousel img { width: 100%; border-radius: calc(var(--preview-radius) - 2px); }
+      .preview-video-wrap { position: relative; padding-top: 56.25%; }
+      .preview-video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: calc(var(--preview-radius) - 2px); }
+      .preview-aspect.is-square { padding-top: 100%; position: relative; }
+      .preview-aspect.is-square img { position: absolute; inset: 0; height: 100%; object-fit: cover; }
+      .preview-chart { display: flex; gap: 8px; align-items: end; min-height: 160px; }
+      .preview-chart div { flex: 1; background: color-mix(in srgb, var(--preview-accent) 80%, white); border-radius: 8px 8px 0 0; }
+      .preview-feature-list, .preview-pricing-card ul { margin: 0; padding-left: 18px; }
+      .preview-cookie-popup { position: fixed; right: 16px; bottom: 16px; width: min(360px, calc(100vw - 32px)); z-index: 20; }
+      .preview-cookie-popup div { display: flex; gap: 10px; margin-top: 12px; }
+      @media (max-width: 900px) { body { padding: 12px; } }
+    </style>
+  </head>
+  <body>
+    <main class="preview-canvas preview-bg-${backgroundId}"${customBackgroundStyle}>
+      ${cards || '<p>Export je prazdny. Pridat bloky ve Studiu.</p>'}
+    </main>
+    <script>
+      document.querySelectorAll('[data-cookie-close="1"]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const popup = button.closest('.preview-cookie-popup');
+          if (popup) popup.remove();
+        });
+      });
+    </script>
+  </body>
+</html>`
+}
+
+function buildReactExportCss() {
+  return `:root {
+  color-scheme: light;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #e8ecef;
+  color: #111827;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.preview-canvas {
+  width: min(var(--preview-canvas-width, 920px), 100%);
+  margin: 1rem auto;
+  border: 1px solid var(--preview-border, #d1d5db);
+  border-radius: var(--preview-radius, 18px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  padding: clamp(1rem, 3vw, 2.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--preview-gap, 0.9rem);
+}
+
+.preview-component {
+  border: 1px solid transparent;
+  border-radius: var(--component-radius, 12px);
+  background: var(--component-bg-color, #ffffff);
+  color: var(--component-text-color, inherit);
+  font-size: var(--component-font-size, inherit);
+  font-weight: var(--component-font-weight, inherit);
+  line-height: var(--component-line-height, inherit);
+  letter-spacing: var(--component-letter-spacing, 0px);
+  opacity: var(--component-opacity, 1);
+  font-family: var(--component-font-family, inherit);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.preview-component-body {
+  padding: calc(16px + var(--component-padding, 0px));
+  border: 1px solid var(--component-border-color, #cbd5e1);
+  border-radius: var(--component-radius, 12px);
+}
+
+.preview-component.has-hover-shadow:hover {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.preview-component:hover {
+  transform: scale(var(--component-hover-scale, 1));
+}
+
+.preview-canvas h1,
+.preview-canvas h2,
+.preview-canvas p {
+  margin: 0;
+}
+
+.preview-canvas h1 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.1;
+  color: var(--preview-heading, #0f172a);
+}
+
+.preview-canvas h2 {
+  font-size: clamp(1.2rem, 2.6vw, 2rem);
+  color: var(--preview-heading, #374151);
+}
+
+.preview-canvas p {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--preview-text, #1f2937);
+}
+
+.preview-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.7rem 0.85rem;
+}
+
+.preview-header nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.preview-header a,
+.preview-footer a {
+  color: #334155;
+  text-decoration: none;
+}
+
+.preview-header button,
+.preview-button,
+.preview-pricing-card button,
+.preview-offer button,
+.preview-cookie-popup button.is-primary {
+  border: 0;
+  border-radius: var(--preview-button-radius, 10px);
+  background: var(--preview-accent, #2563eb);
+  color: #fff;
+  padding: 0.45rem 0.8rem;
+  font-weight: 600;
+}
+
+.preview-image {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  object-fit: cover;
+}
+
+.preview-video-wrap {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  background: #0f172a;
+}
+
+.preview-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  display: block;
+}
+
+.preview-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.preview-button-group button {
+  border: 1px solid var(--preview-accent, #93c5fd);
+  background: color-mix(in srgb, var(--preview-accent, #2563eb) 22%, white);
+  color: #1e40af;
+  border-radius: var(--preview-button-radius, 10px);
+  padding: 0.4rem 0.7rem;
+}
+
+.preview-button-group button.is-active {
+  background: var(--preview-accent, #2563eb);
+  border-color: var(--preview-accent, #2563eb);
+  color: #fff;
+}
+
+.preview-card,
+.preview-accordion,
+.preview-radio-group,
+.preview-kpi,
+.preview-pricing-card,
+.preview-offer,
+.preview-cookie-popup,
+.preview-footer,
+.preview-countdown,
+.preview-quote {
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  background: #ffffff;
+}
+
+.preview-alert {
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+  color: #9a3412;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+}
+
+.preview-badge {
+  display: inline-block;
+  width: fit-content;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--preview-accent, #2563eb) 20%, white);
+  color: var(--preview-accent, #1d4ed8);
+  padding: 0.28rem 0.62rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.preview-avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.preview-avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.preview-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.preview-field input,
+.preview-field textarea,
+.preview-field select {
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  padding: 0.5rem 0.62rem;
+  font: inherit;
+  background: #ffffff;
+}
+
+.preview-radio-group label,
+.preview-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.preview-carousel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.45rem;
+}
+
+.preview-carousel img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+}
+
+.preview-chart {
+  height: 150px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f8fafc, #fff);
+  padding: 0.5rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.preview-chart div {
+  flex: 1;
+  border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, #60a5fa, #2563eb);
+}
+
+.preview-separator {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.preview-separator hr {
+  border: 0;
+  border-top: 1px solid #cbd5e1;
+  flex: 1;
+}
+
+.preview-aspect {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+}
+
+.preview-aspect.is-square {
+  aspect-ratio: 1 / 1;
+  max-width: 420px;
+}
+
+.preview-aspect img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-logo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.preview-logo-row span {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.preview-feature-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.preview-feature-list li {
+  position: relative;
+  padding-left: 1.35rem;
+}
+
+.preview-feature-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.preview-cookie-popup {
+  position: sticky;
+  bottom: 0.5rem;
+  margin-left: auto;
+}
+
+.preview-cookie-popup div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.preview-cookie-popup button {
+  border: 1px solid #475569;
+  background: transparent;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+}
+
+.preview-footer {
+  background: #0f172a;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.preview-bg-clean {
+  background: #ffffff;
+}
+
+.preview-bg-custom {
+  background: var(--preview-custom-bg, #ffffff);
+}
+
+.preview-bg-sunset {
+  background:
+    radial-gradient(circle at 15% 15%, rgba(251, 146, 60, 0.3), transparent 30%),
+    radial-gradient(circle at 85% 80%, rgba(244, 63, 94, 0.22), transparent 34%),
+    linear-gradient(145deg, #fff7ed, #ffedd5);
+}
+
+.preview-bg-ocean {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.28), transparent 32%),
+    radial-gradient(circle at 80% 75%, rgba(6, 182, 212, 0.22), transparent 36%),
+    linear-gradient(135deg, #ecfeff, #cffafe);
+}
+
+.preview-bg-forest {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.24), transparent 30%),
+    radial-gradient(circle at 80% 80%, rgba(22, 163, 74, 0.2), transparent 35%),
+    linear-gradient(145deg, #f0fdf4, #dcfce7);
+}
+
+.preview-bg-grid {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.2) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@media (max-width: 900px) {
+  .preview-canvas {
+    margin: 0;
+    border-radius: 0;
+  }
+}`
+}
+
+function buildReactExportAppSource(snapshot) {
+  const blocks = JSON.stringify(snapshot.blocks ?? [], null, 2)
+  const componentStyles = JSON.stringify(snapshot.componentStyles ?? {}, null, 2)
+  const appearance = JSON.stringify(snapshot.appearance ?? {}, null, 2)
+  const backgroundId = JSON.stringify(snapshot.backgroundId ?? 'clean')
+  const customBackground = JSON.stringify(snapshot.customBackground ?? '#ffffff')
+
+  return `import { useState } from 'react'
+
+const BLOCKS = ${blocks}
+const COMPONENT_STYLES = ${componentStyles}
+const APPEARANCE = ${appearance}
+const BACKGROUND_ID = ${backgroundId}
+const CUSTOM_BACKGROUND = ${customBackground}
+
+const DEFAULT_COMPONENT_STYLE = {
+  textColor: '#1f2937',
+  backgroundColor: '#ffffff',
+  borderColor: '#cbd5e1',
+  hoverColor: '#2563eb',
+  fontSize: 16,
+  fontWeight: 400,
+  lineHeight: 1.5,
+  letterSpacing: 0,
+  padding: 0,
+  radius: 12,
+  opacity: 100,
+  hoverScale: 1.03,
+  hoverShadow: true,
+  animation: 'none',
+  fontFamily: 'inherit',
+}
+
+function withDefaultComponentStyle(style) {
+  return {
+    ...DEFAULT_COMPONENT_STYLE,
+    ...(style ?? {}),
+  }
+}
+
+function toList(value) {
+  return String(value)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function clampNumber(value, min, max, fallback) {
+  const number = Number(value)
+  if (Number.isNaN(number)) return fallback
+  return Math.max(min, Math.min(max, number))
+}
+
+function getComponentStyle(styleConfig) {
+  const style = withDefaultComponentStyle(styleConfig)
+  return {
+    '--component-text-color': style.textColor,
+    '--component-bg-color': style.backgroundColor,
+    '--component-border-color': style.borderColor,
+    '--component-hover-color': style.hoverColor,
+    '--component-font-size': style.fontSize + 'px',
+    '--component-font-weight': style.fontWeight,
+    '--component-line-height': style.lineHeight,
+    '--component-letter-spacing': style.letterSpacing + 'px',
+    '--component-padding': style.padding + 'px',
+    '--component-radius': style.radius + 'px',
+    '--component-opacity': style.opacity / 100,
+    '--component-hover-scale': style.hoverScale,
+    '--component-font-family': style.fontFamily,
+  }
+}
+
+function renderBlock(block, state, onStateChange) {
+  const { type, props } = block
+
+  function getStateValue(key, fallback) {
+    if (state && key in state) return state[key]
+    return fallback
+  }
+
+  if (type === 'heading') return <h1 key={block.id}>{props.text}</h1>
+  if (type === 'subheading') return <h2 key={block.id}>{props.text}</h2>
+  if (type === 'text') return <p key={block.id}>{props.text}</p>
+
+  if (type === 'header') {
+    return (
+      <header key={block.id} className="preview-header">
+        <strong>{props.brand}</strong>
+        <nav>
+          {toList(props.links).map((link, index) => (
+            <a href="#" key={link + '-' + index}>
+              {link}
+            </a>
+          ))}
+        </nav>
+        <button type="button">{props.cta}</button>
+      </header>
+    )
+  }
+
+  if (type === 'image') return <img key={block.id} className="preview-image" src={props.src} alt={props.alt} loading="lazy" />
+
+  if (type === 'video') {
+    return (
+      <div key={block.id} className="preview-video-wrap">
+        <iframe
+          src={props.url}
+          title={props.title}
+          className="preview-video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    )
+  }
+
+  if (type === 'button') return <a key={block.id} className="preview-button" href={props.href}>{props.text}</a>
+
+  if (type === 'button-group') {
+    const activeIndex = getStateValue('activeIndex', -1)
+    return (
+      <div key={block.id} className="preview-button-group">
+        {toList(props.items).map((item, index) => (
+          <button type="button" key={item + '-' + index} className={index === activeIndex ? 'is-active' : ''} onClick={() => onStateChange({ activeIndex: index })}>
+            {item}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  if (type === 'accordion' || type === 'collapsible') {
+    const isOpen = Boolean(getStateValue('open', props.open))
+    return (
+      <details key={block.id} className="preview-accordion" open={isOpen} onToggle={(event) => onStateChange({ open: event.currentTarget.open })}>
+        <summary>{props.title}</summary>
+        <p>{props.content}</p>
+      </details>
+    )
+  }
+
+  if (type === 'alert') return <div key={block.id} className="preview-alert" role="alert">{props.text}</div>
+
+  if (type === 'card') {
+    return (
+      <article key={block.id} className="preview-card">
+        <h3>{props.title}</h3>
+        <p>{props.content}</p>
+      </article>
+    )
+  }
+
+  if (type === 'badge') return <span key={block.id} className="preview-badge">{props.text}</span>
+
+  if (type === 'avatar') {
+    return (
+      <div key={block.id} className="preview-avatar">
+        <img src={props.src} alt={props.name} />
+        <span>{props.name}</span>
+      </div>
+    )
+  }
+
+  if (type === 'checkbox') {
+    const checked = Boolean(getStateValue('checked', props.checked))
+    return (
+      <label key={block.id} className="preview-check">
+        <input type="checkbox" checked={checked} onChange={(event) => onStateChange({ checked: event.target.checked })} />
+        <span>{props.label}</span>
+      </label>
+    )
+  }
+
+  if (type === 'input') {
+    const value = String(getStateValue('value', ''))
+    return (
+      <label key={block.id} className="preview-field">
+        <span>{props.label}</span>
+        <input type="text" placeholder={props.placeholder} value={value} onChange={(event) => onStateChange({ value: event.target.value })} />
+      </label>
+    )
+  }
+
+  if (type === 'textarea') {
+    const value = String(getStateValue('value', ''))
+    return (
+      <label key={block.id} className="preview-field">
+        <span>{props.label}</span>
+        <textarea placeholder={props.placeholder} rows={4} value={value} onChange={(event) => onStateChange({ value: event.target.value })} />
+      </label>
+    )
+  }
+
+  if (type === 'select') {
+    const options = toList(props.options)
+    const fallbackValue = options[0] ?? ''
+    const value = String(getStateValue('value', fallbackValue))
+    return (
+      <label key={block.id} className="preview-field">
+        <span>{props.label}</span>
+        <select value={value} onChange={(event) => onStateChange({ value: event.target.value })}>
+          {options.map((option, index) => (
+            <option key={option + '-' + index}>{option}</option>
+          ))}
+        </select>
+      </label>
+    )
+  }
+
+  if (type === 'radio-group') {
+    const options = toList(props.options)
+    const selectedValue = String(getStateValue('selected', props.selected))
+    return (
+      <fieldset key={block.id} className="preview-radio-group">
+        <legend>{props.label}</legend>
+        {options.map((option, index) => (
+          <label key={option + '-' + index}>
+            <input type="radio" name={'radio-' + block.id} checked={selectedValue === option} onChange={() => onStateChange({ selected: option })} />
+            <span>{option}</span>
+          </label>
+        ))}
+      </fieldset>
+    )
+  }
+
+  if (type === 'carousel') {
+    return (
+      <div key={block.id} className="preview-carousel">
+        {toList(props.images).map((image, index) => (
+          <img key={image + '-' + index} src={image} alt={'slide-' + (index + 1)} />
+        ))}
+      </div>
+    )
+  }
+
+  if (type === 'chart') {
+    const values = toList(props.values).map((value) => clampNumber(value, 0, 100, 0))
+    return (
+      <div key={block.id} className="preview-chart">
+        {values.map((value, index) => (
+          <div key={value + '-' + index} style={{ height: value + '%' }} title={value + '%'} />
+        ))}
+      </div>
+    )
+  }
+
+  if (type === 'progress') {
+    const value = clampNumber(props.value, 0, 100, 0)
+    return (
+      <div key={block.id} className="preview-progress-wrap">
+        <span>{props.label}</span>
+        <progress max="100" value={value} />
+      </div>
+    )
+  }
+
+  if (type === 'separator') {
+    return (
+      <div key={block.id} className="preview-separator">
+        <hr />
+        <span>{props.text}</span>
+      </div>
+    )
+  }
+
+  if (type === 'aspect-ratio') {
+    const isSquare = String(props.ratio).trim() === '1/1'
+    return (
+      <div key={block.id} className={'preview-aspect' + (isSquare ? ' is-square' : '')}>
+        <img src={props.src} alt="aspect content" />
+      </div>
+    )
+  }
+
+  if (type === 'quote') {
+    return (
+      <figure key={block.id} className="preview-quote">
+        <blockquote>"{props.text}"</blockquote>
+        <figcaption>{props.author}</figcaption>
+      </figure>
+    )
+  }
+
+  if (type === 'logo-row') {
+    return (
+      <div key={block.id} className="preview-logo-row">
+        {toList(props.items).map((item, index) => (
+          <span key={item + '-' + index}>{item}</span>
+        ))}
+      </div>
+    )
+  }
+
+  if (type === 'kpi') {
+    return (
+      <article key={block.id} className="preview-kpi">
+        <strong>{props.value}</strong>
+        <p>{props.label}</p>
+        <small>{props.note}</small>
+      </article>
+    )
+  }
+
+  if (type === 'pricing-card') {
+    return (
+      <article key={block.id} className="preview-pricing-card">
+        <h3>{props.plan}</h3>
+        <p className="preview-pricing-line">
+          <strong>{props.price}</strong>
+          <span>{props.period}</span>
+        </p>
+        <ul>
+          {toList(props.features).map((feature, index) => (
+            <li key={feature + '-' + index}>{feature}</li>
+          ))}
+        </ul>
+        <button type="button">{props.cta}</button>
+      </article>
+    )
+  }
+
+  if (type === 'feature-list') {
+    return (
+      <ul key={block.id} className="preview-feature-list">
+        {toList(props.items).map((item, index) => (
+          <li key={item + '-' + index}>{item}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  if (type === 'countdown') {
+    const days = clampNumber(props.days, 0, 365, 0)
+    const hours = clampNumber(props.hours, 0, 23, 0)
+    const minutes = clampNumber(props.minutes, 0, 59, 0)
+    return (
+      <div key={block.id} className="preview-countdown">
+        <p>{props.label}</p>
+        <div>
+          <span><strong>{days}</strong><small>dnu</small></span>
+          <span><strong>{hours}</strong><small>hod</small></span>
+          <span><strong>{minutes}</strong><small>min</small></span>
+        </div>
+      </div>
+    )
+  }
+
+  if (type === 'limited-offer') {
+    return (
+      <article key={block.id} className="preview-offer">
+        <div>
+          <h3>{props.title}</h3>
+          <p>{props.subtitle}</p>
+        </div>
+        <code>{props.code}</code>
+        <button type="button">{props.cta}</button>
+      </article>
+    )
+  }
+
+  if (type === 'cookie-popup') {
+    const closed = Boolean(getStateValue('closed', false))
+    if (closed) return null
+    return (
+      <aside key={block.id} className="preview-cookie-popup" role="dialog" aria-label="Cookie consent">
+        <h4>{props.title}</h4>
+        <p>{props.text}</p>
+        <div>
+          <button type="button" onClick={() => onStateChange({ closed: true })}>{props.reject}</button>
+          <button type="button" className="is-primary" onClick={() => onStateChange({ closed: true, accepted: true })}>{props.accept}</button>
+        </div>
+      </aside>
+    )
+  }
+
+  if (type === 'footer') {
+    return (
+      <footer key={block.id} className="preview-footer">
+        <strong>{props.brand}</strong>
+        <p>{props.note}</p>
+        <div>
+          {toList(props.links).map((link, index) => (
+            <a href="#" key={link + '-' + index}>{link}</a>
+          ))}
+        </div>
+      </footer>
+    )
+  }
+
+  return null
+}
+
+export default function App() {
+  const [previewState, setPreviewState] = useState({})
+  const previewStyle = {
+    '--preview-text': APPEARANCE.textColor,
+    '--preview-heading': APPEARANCE.headingColor,
+    '--preview-accent': APPEARANCE.accentColor,
+    '--preview-card-bg': APPEARANCE.cardBg,
+    '--preview-border': APPEARANCE.borderColor,
+    '--preview-radius': APPEARANCE.radius + 'px',
+    '--preview-gap': APPEARANCE.gap + 'px',
+    '--preview-button-radius': APPEARANCE.buttonRadius + 'px',
+    '--preview-canvas-width': APPEARANCE.canvasWidth + 'px',
+    '--preview-custom-bg': CUSTOM_BACKGROUND,
+  }
+
+  return (
+    <main className={'preview-canvas preview-bg-' + BACKGROUND_ID} style={previewStyle}>
+      {BLOCKS.length > 0 ? (
+        BLOCKS.map((block) => {
+          const style = withDefaultComponentStyle(COMPONENT_STYLES[block.id])
+          const classes = ['preview-component']
+          if (style.hoverShadow) classes.push('has-hover-shadow')
+          return (
+            <section key={block.id} className={classes.join(' ')} style={getComponentStyle(style)}>
+              <div className="preview-component-body">
+                {renderBlock(block, previewState[block.id], (patch) =>
+                  setPreviewState((prev) => ({
+                    ...prev,
+                    [block.id]: {
+                      ...(prev[block.id] ?? {}),
+                      ...patch,
+                    },
+                  }))
+                )}
+              </div>
+            </section>
+          )
+        })
+      ) : (
+        <p>Preview je prazdny.</p>
+      )}
+    </main>
+  )
+}
+`
+}
+
+function buildReactProjectFiles(snapshot) {
+  return {
+    'package.json': JSON.stringify(
+      {
+        name: 'landing-page-export',
+        private: true,
+        version: '1.0.0',
+        type: 'module',
+        scripts: {
+          dev: 'vite',
+          build: 'vite build',
+          preview: 'vite preview',
+        },
+        dependencies: {
+          react: '^19.2.7',
+          'react-dom': '^19.2.7',
+        },
+        devDependencies: {
+          '@vitejs/plugin-react': '^6.0.3',
+          vite: '^8.1.1',
+        },
+      },
+      null,
+      2,
+    ) + '\n',
+    'index.html': `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Landing Page Export</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+`,
+    'vite.config.js': `import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+})
+`,
+    'src/main.jsx': `import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+`,
+    'src/App.jsx': buildReactExportAppSource(snapshot),
+    'src/index.css': buildReactExportCss(),
+    'README.md': `# Landing Page Export\n\nExport generated from 247solutions Studio.\n\n## Run\n\n- npm install\n- npm run dev\n\n## Build\n\n- npm run build\n`,
+  }
+}
+
+async function exportReactProjectZip(snapshot) {
+  const jszipModule = await import('jszip')
+  const JSZip = jszipModule.default
+  const zip = new JSZip()
+  const files = buildReactProjectFiles(snapshot)
+
+  Object.entries(files).forEach(([path, content]) => {
+    zip.file(path, content)
+  })
+
+  const blob = await zip.generateAsync({ type: 'blob' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = 'landing-page-react-project.zip'
+  anchor.click()
+  URL.revokeObjectURL(url)
 }
 
 function withDefaultComponentStyle(style) {
@@ -1198,7 +2447,7 @@ function renderEditorFields(block, onChange) {
   return null
 }
 
-export default function App() {
+function StudioApp() {
   const [blocks, setBlocks] = useState([createBlock('heading', 0), createBlock('text', 1), createBlock('button', 2)])
   const [backgroundId, setBackgroundId] = useState('clean')
   const [componentQuery, setComponentQuery] = useState('')
@@ -1376,24 +2625,38 @@ export default function App() {
     }))
   }
 
-  function getComponentStyle(id) {
-    const style = withDefaultComponentStyle(componentStyles[id])
-
-    return {
-      '--component-text-color': style.textColor,
-      '--component-bg-color': style.backgroundColor,
-      '--component-border-color': style.borderColor,
-      '--component-hover-color': style.hoverColor,
-      '--component-font-size': `${style.fontSize}px`,
-      '--component-font-weight': style.fontWeight,
-      '--component-line-height': style.lineHeight,
-      '--component-letter-spacing': `${style.letterSpacing}px`,
-      '--component-padding': `${style.padding}px`,
-      '--component-radius': `${style.radius}px`,
-      '--component-opacity': style.opacity / 100,
-      '--component-hover-scale': style.hoverScale,
-      '--component-font-family': style.fontFamily,
+  function exportCurrentProjectSource() {
+    const snapshot = {
+      blocks,
+      backgroundId,
+      customBackground,
+      appearance,
+      componentStyles,
     }
+    const html = buildStaticExportHtml(snapshot)
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'landing-page-export.html'
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function exportCurrentReactProject() {
+    const snapshot = {
+      blocks,
+      backgroundId,
+      customBackground,
+      appearance,
+      componentStyles,
+    }
+
+    await exportReactProjectZip(snapshot)
+  }
+
+  function getComponentStyle(id) {
+    return getComponentCssVariables(componentStyles[id])
   }
 
   function getComponentWrapperClass(id) {
@@ -1415,18 +2678,18 @@ export default function App() {
     return classes.join(' ')
   }
 
-  const previewStyle = {
-    '--preview-text': appearance.textColor,
-    '--preview-heading': appearance.headingColor,
-    '--preview-accent': appearance.accentColor,
-    '--preview-card-bg': appearance.cardBg,
-    '--preview-border': appearance.borderColor,
-    '--preview-radius': `${appearance.radius}px`,
-    '--preview-gap': `${appearance.gap}px`,
-    '--preview-button-radius': `${appearance.buttonRadius}px`,
-    '--preview-canvas-width': `${appearance.canvasWidth}px`,
-    '--preview-custom-bg': customBackground,
-  }
+  const previewStyle = getPreviewStyle(appearance, customBackground)
+
+  useEffect(() => {
+    savePreviewSnapshot({
+      blocks,
+      backgroundId,
+      customBackground,
+      appearance,
+      componentStyles,
+      updatedAt: Date.now(),
+    })
+  }, [blocks, backgroundId, customBackground, appearance, componentStyles])
 
   return (
     <div className="editor-layout">
@@ -1435,6 +2698,24 @@ export default function App() {
         <p className="panel-muted">Toolbox je pro landing page (bez menu/tabs/breadcrumbs).</p>
 
         <div className="editor-meta">{blockCountLabel}</div>
+
+        <div className="studio-actions">
+          <button type="button" onClick={exportCurrentProjectSource}>
+            Export HTML zdrojak
+          </button>
+          <button type="button" onClick={exportCurrentReactProject}>
+            Export full React projekt (.zip)
+          </button>
+          <button
+            type="button"
+            onClick={() => window.open('/preview', '_blank', 'noopener,noreferrer')}
+          >
+            Otevrit live podstranku
+          </button>
+          <p className="panel-muted">
+            Live nahled je dostupny na <code>/preview</code> a aktualizuje se automaticky.
+          </p>
+        </div>
 
         <div>
           <p className="panel-muted">Pozadi preview</p>
@@ -1899,4 +3180,104 @@ export default function App() {
       </section>
     </div>
   )
+}
+
+function LivePreviewSubpage() {
+  const [snapshot, setSnapshot] = useState(() => {
+    if (typeof window === 'undefined') return null
+    return readSavedPreviewSnapshot()
+  })
+  const [previewState, setPreviewState] = useState({})
+
+  useEffect(() => {
+    function refreshSnapshot() {
+      setSnapshot(readSavedPreviewSnapshot())
+    }
+
+    refreshSnapshot()
+    const intervalId = window.setInterval(refreshSnapshot, 900)
+    return () => window.clearInterval(intervalId)
+  }, [])
+
+  if (!snapshot) {
+    return (
+      <div className="live-preview-page">
+        <div className="live-preview-empty">
+          <h1>Live Preview</h1>
+          <p>Preview zatim nema data. Otevri Studio a uprav bloky.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const blocks = Array.isArray(snapshot.blocks) ? snapshot.blocks : []
+  const backgroundId = snapshot.backgroundId ?? 'clean'
+  const appearance = snapshot.appearance ?? {
+    textColor: '#1f2937',
+    headingColor: '#0f172a',
+    accentColor: '#2563eb',
+    cardBg: '#ffffff',
+    borderColor: '#cbd5e1',
+    radius: 12,
+    gap: 14,
+    buttonRadius: 10,
+    canvasWidth: 920,
+  }
+  const customBackground = snapshot.customBackground ?? '#ffffff'
+  const componentStyles = snapshot.componentStyles ?? {}
+
+  return (
+    <div className="live-preview-page">
+      <header className="live-preview-header">
+        <strong>247solutions Live Preview</strong>
+        <a href="/">Zpet do Studia</a>
+      </header>
+
+      <main
+        className={`preview-canvas preview-bg-${backgroundId} preview-standalone`}
+        style={getPreviewStyle(appearance, customBackground)}
+      >
+        {blocks.length > 0 ? (
+          blocks.map((block) => {
+            const style = withDefaultComponentStyle(componentStyles[block.id])
+            const classes = ['preview-component', 'preview-standalone-component']
+            if (style.hoverShadow) classes.push('has-hover-shadow')
+            if (style.animation !== 'none') classes.push(`anim-${style.animation}`)
+
+            return (
+              <div key={block.id} className={classes.join(' ')} style={getComponentCssVariables(style)}>
+                <div className="preview-component-body">
+                  {renderPreviewBlock(block, previewState[block.id], (patch) =>
+                    setPreviewState((prev) => ({
+                      ...prev,
+                      [block.id]: {
+                        ...(prev[block.id] ?? {}),
+                        ...patch,
+                      },
+                    }))
+                  )}
+                </div>
+              </div>
+            )
+          })
+        ) : (
+          <p className="preview-empty">Preview je prazdny.</p>
+        )}
+      </main>
+    </div>
+  )
+}
+
+function isPreviewRoute() {
+  if (typeof window === 'undefined') return false
+  const normalized = window.location.pathname.replace(/\/+$/, '')
+  return normalized === '/preview'
+}
+
+export default function App() {
+  if (isPreviewRoute()) {
+    return <LivePreviewSubpage />
+  }
+
+  return <StudioApp />
 }
