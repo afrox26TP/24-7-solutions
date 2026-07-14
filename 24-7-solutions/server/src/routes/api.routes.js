@@ -3,7 +3,7 @@ const { getExample } = require('../controllers/example.controller')
 
 const router = Router()
 
-// Placeholder endpoint for future feature modules.
+// Ukazkovy koncovy bod slouzi jako zaklad pro budouci moduly API.
 router.get('/example', getExample)
 
 module.exports = router

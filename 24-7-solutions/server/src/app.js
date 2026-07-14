@@ -7,6 +7,7 @@ const { notFoundHandler, errorHandler } = require('./middleware/error.middleware
 
 const app = express()
 
+// Middleware se registruje v poradi zpracovani pozadavku.
 app.use(cors())
 app.use(express.json())
 
@@ -17,6 +18,7 @@ app.get('/', (req, res) => {
 app.use('/api/health', healthRoutes)
 app.use('/api', apiRoutes)
 
+// Nezachycene pozadavky a chyby se zpracovavaji az po vsech trasach.
 app.use(notFoundHandler)
 app.use(errorHandler)
 

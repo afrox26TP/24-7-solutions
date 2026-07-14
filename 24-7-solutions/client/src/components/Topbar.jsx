@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 
+// Jediny seznam udrzuje desktopovou a mobilni navigaci ve shode.
 const navItems = [
   { to: '/', label: 'Hlavní' },
   { to: '/weby', label: 'Weby' },
@@ -11,6 +12,7 @@ const navItems = [
 ]
 
 function Topbar() {
+  // Stav ovlada pouze mobilni menu; desktopova navigace je zobrazena trvale.
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -21,6 +23,7 @@ function Topbar() {
         </Link>
 
         <nav className="hidden items-center gap-2 md:flex">
+          {/* NavLink nastavi vzhled polozky podle prave zobrazene stranky. */}
           {navItems.map((item) => (
             <NavLink
               key={item.to}

@@ -1,3 +1,4 @@
+// Jednoducha odpoved slouzi pro monitoring dostupnosti serveru.
 function getHealth(req, res) {
   res.status(200).json({
     ok: true,

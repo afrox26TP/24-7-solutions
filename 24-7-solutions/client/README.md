@@ -1,16 +1,51 @@
-# React + Vite
+# Klientská aplikace 24-7 Solutions
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Klientská část prezentačního webu společnosti 24-7 Solutions. Aplikace představuje nabízené služby, cenové plány, postup spolupráce a realizované projekty.
 
-Currently, two official plugins are available:
+## Použité technologie
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19;
+- React Router 7;
+- Vite 8;
+- Tailwind CSS 4;
+- ESLint.
 
-## React Compiler
+## Instalace a spuštění
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+V adresáři `client` spusťte:
 
-## Expanding the ESLint configuration
+```bash
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Vývojový server standardně používá adresu `http://localhost:5173`. Požadavky směřující na `/api` jsou ve vývojovém režimu předávány serveru na adrese `http://localhost:5000`.
+
+## Dostupné příkazy
+
+| Příkaz | Popis |
+| --- | --- |
+| `npm run dev` | Spustí vývojový server s automatickou aktualizací stránky. |
+| `npm run build` | Vytvoří produkční sestavení v adresáři `dist`. |
+| `npm run lint` | Zkontroluje zdrojový kód pomocí ESLintu. |
+| `npm run preview` | Spustí místní náhled produkčního sestavení. |
+
+## Struktura zdrojového kódu
+
+```text
+src/
+├── components/   # Sdílené prvky rozhraní
+├── pages/        # Jednotlivé stránky aplikace
+├── App.jsx       # Definice směrování
+├── index.css     # Globální styly a konfigurace Tailwind CSS
+└── main.jsx      # Vstupní bod aplikace
+```
+
+## Produkční sestavení
+
+```bash
+npm run build
+npm run preview
+```
+
+Před odevzdáním změn se doporučuje spustit také příkaz `npm run lint`.

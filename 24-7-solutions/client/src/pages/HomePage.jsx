@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 
 function HomePage() {
+  // Data portfolia jsou oddelena od sablony, aby se projekty vykreslovaly jednotne.
   const portfolio = [
     {
       name: 'Muzeer',
@@ -62,6 +63,7 @@ function HomePage() {
             Spolupráce je jednoduchá a přehledná. Od první zprávy až po finální předání víte, co se děje a co
             bude následovat.
           </p>
+          {/* Jednotlive kroky popisuji cely obchodni proces od poptavky po predani. */}
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4 text-slate-200">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-300">1. Výběr a kontakt</p>

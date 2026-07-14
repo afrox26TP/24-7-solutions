@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
+// Volby pozadi sdili editor i samostatny zivy nahled.
 const BACKGROUND_OPTIONS = [
   { id: 'clean', label: 'Clean' },
   { id: 'sunset', label: 'Sunset' },
@@ -27,6 +28,7 @@ const DEFAULT_COMPONENT_STYLE = {
   fontFamily: 'inherit',
 }
 
+// Predvolby meni cely soubor vlastnosti, aby zustal vzhled komponent konzistentni.
 const COMPONENT_STYLE_PRESETS = {
   modern: {
     textColor: '#1f2937',
@@ -100,6 +102,7 @@ const COMPONENT_STYLE_PRESETS = {
 
 const PREVIEW_STORAGE_KEY = 'studio-live-preview-v1'
 
+// Neplatna nebo nedostupna data uloziste se povazuji za chybejici snapshot.
 function readSavedPreviewSnapshot() {
   try {
     const raw = window.localStorage.getItem(PREVIEW_STORAGE_KEY)
@@ -114,11 +117,12 @@ function savePreviewSnapshot(snapshot) {
   try {
     window.localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(snapshot))
   } catch {
-    // Ignore storage failures (private mode, quota, etc.)
+    // Chyba uloziste nesmi prerusit editor, napr. v anonymnim rezimu nebo pri plne kvote.
   }
 }
 
 function getPreviewStyle(appearance, customBackground) {
+  // CSS promenne umozni menit vzhled nahledu bez generovani novych trid.
   return {
     '--preview-text': appearance.textColor,
     '--preview-heading': appearance.headingColor,
@@ -154,6 +158,7 @@ function getComponentCssVariables(styleConfig) {
 }
 
 function escapeHtml(value) {
+  // Uzivatelsky obsah se pred vlozenim do exportovaneho HTML bezpecne zakoduje.
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -163,6 +168,7 @@ function escapeHtml(value) {
 }
 
 function renderStaticBlockSource(block) {
+  // Kazdy typ bloku se prevadi na samostatnou statickou HTML strukturu.
   const { type, props } = block
 
   if (type === 'heading') return `<h1>${escapeHtml(props.text)}</h1>`
@@ -404,6 +410,7 @@ function renderStaticBlockSource(block) {
 }
 
 function buildStaticExportHtml(snapshot) {
+  // Vysledkem je samostatny dokument se styly i jednoduchou interaktivitou bez zavislosti.
   const appearance = snapshot.appearance ?? {
     textColor: '#1f2937',
     headingColor: '#0f172a',
@@ -525,6 +532,7 @@ function buildStaticExportHtml(snapshot) {
 }
 
 function buildReactExportCss() {
+  // Sdilene styly se do exportovaneho projektu ukladaji jako samostatny CSS soubor.
   return `:root {
   color-scheme: light;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -1026,6 +1034,7 @@ body {
 }
 
 function buildReactExportAppSource(snapshot) {
+  // Aktualni snapshot se vlozi primo do zdrojoveho kodu exportovane React aplikace.
   const blocks = JSON.stringify(snapshot.blocks ?? [], null, 2)
   const componentStyles = JSON.stringify(snapshot.componentStyles ?? {}, null, 2)
   const appearance = JSON.stringify(snapshot.appearance ?? {}, null, 2)
@@ -1100,6 +1109,7 @@ function getComponentStyle(styleConfig) {
 function renderBlock(block, state, onStateChange) {
   const { type, props } = block
 
+  // Interaktivni hodnoty bloku maji prednost pred puvodnimi hodnotami ze snapshotu.
   function getStateValue(key, fallback) {
     if (state && key in state) return state[key]
     return fallback
@@ -1535,6 +1545,7 @@ export default function App() {
 }
 
 function buildReactProjectFiles(snapshot) {
+  // Mapa cest a obsahu predstavuje kompletni minimalni projekt pripraveny pro ZIP archiv.
   return {
     'package.json': JSON.stringify(
       {
@@ -1597,6 +1608,7 @@ createRoot(document.getElementById('root')).render(
 }
 
 async function exportReactProjectZip(snapshot) {
+  // Dynamicky import odlozi nacteni JSZip az do okamziku skutecneho exportu.
   const jszipModule = await import('jszip')
   const JSZip = jszipModule.default
   const zip = new JSZip()
@@ -1616,12 +1628,14 @@ async function exportReactProjectZip(snapshot) {
 }
 
 function withDefaultComponentStyle(style) {
+  // Castecne nastaveni se doplni vychozimi hodnotami pro zpetnou kompatibilitu snapshotu.
   return {
     ...DEFAULT_COMPONENT_STYLE,
     ...(style ?? {}),
   }
 }
 
+// Centralni katalog definuje nabidku bloku i jejich pocatecni vlastnosti.
 const COMPONENT_LIBRARY = [
   {
     type: 'header',
@@ -1866,6 +1880,7 @@ const COMPONENT_LIBRARY = [
   },
 ]
 
+// Sablony skladaji opakovane pouzivane casti webu z nekolika pripravenych bloku.
 const PREMADE_SECTIONS = [
   {
     id: 'form',
@@ -2440,6 +2455,7 @@ const PREMADE_SECTIONS = [
   },
 ]
 
+// Cele weby a mensi sekce se v editoru zobrazuji jako dve oddelene skupiny.
 const PREMADE_WEBS = PREMADE_SECTIONS.filter(
   (section) => section.id.startsWith('boilerplate-') || section.id.startsWith('full-'),
 )
@@ -2463,6 +2479,7 @@ function clampNumber(value, min, max, fallback) {
 
 function createBlock(type, index) {
   const definition = COMPONENT_LIBRARY.find((component) => component.type === type)
+  // Neznamy typ nesmi rozbit editor ani pri nacteni starsi sablony.
   if (!definition) {
     return {
       id: `unknown-${Date.now()}-${index}`,
@@ -2481,6 +2498,7 @@ function createBlock(type, index) {
 function createBlockFromTemplate(template, index) {
   const baseBlock = createBlock(template.type, index)
 
+  // Hodnoty sablony prepisuji pouze vlastnosti specificke pro danou instanci.
   return {
     ...baseBlock,
     props: {
@@ -2491,6 +2509,7 @@ function createBlockFromTemplate(template, index) {
 }
 
 function renderPreviewBlock(block, state, onStateChange) {
+  // Na rozdil od statickeho exportu zde bloky zachovavaji interaktivni stav.
   const { type, props } = block
 
   function getStateValue(key, fallback) {
@@ -3318,6 +3337,7 @@ function StudioApp() {
     const section = PREMADE_SECTIONS.find((item) => item.id === sectionId)
     if (!section) return
 
+    // Nektere sablony nahrazuji cely web, ostatni se pouze pridaji za aktualni obsah.
     const offset = section.replaceExisting ? 0 : blocks.length
     const nextBlocks = section.blocks.map((template, index) =>
       createBlockFromTemplate(template, offset + index),
@@ -3367,6 +3387,7 @@ function StudioApp() {
   }
 
   function removeBlock(id) {
+    // Spolu s blokem se odstrani i jeho docasny stav a individualni styl.
     setBlocks((prev) => prev.filter((block) => block.id !== id))
     setPreviewState((prev) => {
       const next = { ...prev }
@@ -3384,6 +3405,7 @@ function StudioApp() {
   }
 
   function updatePreviewState(id, patch) {
+    // Stav interaktivnich prvku je izolovan podle identifikatoru bloku.
     setPreviewState((prev) => ({
       ...prev,
       [id]: {
@@ -3509,6 +3531,7 @@ function StudioApp() {
   const previewStyle = getPreviewStyle(appearance, customBackground)
 
   useEffect(() => {
+    // Kazda zmena editoru se prubezne synchronizuje se samostatnou stranou nahledu.
     savePreviewSnapshot({
       blocks,
       backgroundId,
@@ -4042,6 +4065,7 @@ function LivePreviewSubpage() {
       setSnapshot(readSavedPreviewSnapshot())
     }
 
+    // Polling zachyti i zmeny localStorage provedene v jine karte prohlizece.
     refreshSnapshot()
     const intervalId = window.setInterval(refreshSnapshot, 900)
     return () => window.clearInterval(intervalId)

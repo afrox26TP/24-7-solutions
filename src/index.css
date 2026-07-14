@@ -2070,7 +2070,7 @@ body {
   display: none;
 }
 
-/* Live preview page should not show editor-like hover highlighting. */
+/* Samostatny nahled nema zobrazovat zvyrazneni urcene pouze pro editor. */
 .preview-standalone .preview-component:hover {
   transform: none;
   border-color: transparent;

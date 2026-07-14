@@ -7,6 +7,7 @@ function notFoundHandler(req, res, next) {
 function errorHandler(err, req, res, next) {
   const status = err.status || 500
 
+  // Interni chyby se zapisuji do konzole, klient vsak obdrzi jednotnou JSON odpoved.
   if (status === 500) {
     console.error(err)
   }
