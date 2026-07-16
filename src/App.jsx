@@ -3294,6 +3294,8 @@ function StudioApp() {
     buttonRadius: 10,
     canvasWidth: 920,
   })
+  const [undoStack, setUndoStack] = useState([])
+  const [redoStack, setRedoStack] = useState([])
 
   const hasBlocks = blocks.length > 0
   const selectedBlock = blocks.find((block) => block.id === selectedBlockId) ?? null
@@ -3321,16 +3323,68 @@ function StudioApp() {
     })
   }, [componentQuery])
 
-  function addBlock(type) {
-    let createdBlock = null
-    setBlocks((prev) => {
-      createdBlock = createBlock(type, prev.length)
-      return [...prev, createdBlock]
-    })
-
-    if (createdBlock) {
-      setSelectedBlockId(createdBlock.id)
+  function captureEditorSnapshot() {
+    return {
+      blocks,
+      backgroundId,
+      customBackground,
+      appearance,
+      componentStyles,
+      selectedBlockId,
     }
+  }
+
+  function applyEditorSnapshot(snapshot) {
+    setBlocks(snapshot.blocks)
+    setBackgroundId(snapshot.backgroundId)
+    setCustomBackground(snapshot.customBackground)
+    setAppearance(snapshot.appearance)
+    setComponentStyles(snapshot.componentStyles)
+    setSelectedBlockId(snapshot.selectedBlockId)
+    setPreviewState({})
+  }
+
+  function recordEditorChange() {
+    const snapshot = captureEditorSnapshot()
+    setUndoStack((previous) => [...previous.slice(-99), snapshot])
+    setRedoStack([])
+  }
+
+  function undoEditorChange() {
+    const previous = undoStack.at(-1)
+    if (!previous) return
+
+    setUndoStack(undoStack.slice(0, -1))
+    setRedoStack((current) => [...current.slice(-99), captureEditorSnapshot()])
+    applyEditorSnapshot(previous)
+  }
+
+  function redoEditorChange() {
+    const next = redoStack.at(-1)
+    if (!next) return
+
+    setRedoStack(redoStack.slice(0, -1))
+    setUndoStack((current) => [...current.slice(-99), captureEditorSnapshot()])
+    applyEditorSnapshot(next)
+  }
+
+  function changeBackground(nextBackgroundId) {
+    if (nextBackgroundId === backgroundId) return
+    recordEditorChange()
+    setBackgroundId(nextBackgroundId)
+  }
+
+  function changeCustomBackground(value) {
+    if (value === customBackground) return
+    recordEditorChange()
+    setCustomBackground(value)
+  }
+
+  function addBlock(type) {
+    const createdBlock = createBlock(type, blocks.length)
+    recordEditorChange()
+    setBlocks((prev) => [...prev, createdBlock])
+    setSelectedBlockId(createdBlock.id)
   }
 
   function addPremadeSection(sectionId) {
@@ -3344,6 +3398,7 @@ function StudioApp() {
     )
     const firstCreatedId = nextBlocks[0]?.id ?? null
 
+    recordEditorChange()
     setBlocks((prev) => section.replaceExisting ? nextBlocks : [...prev, ...nextBlocks])
 
     if (section.componentPreset && COMPONENT_STYLE_PRESETS[section.componentPreset]) {
@@ -3377,6 +3432,9 @@ function StudioApp() {
   }
 
   function updateBlockProp(id, propName, value) {
+    const block = blocks.find((item) => item.id === id)
+    if (!block || block.props[propName] === value) return
+    recordEditorChange()
     setBlocks((prev) =>
       prev.map((block) =>
         block.id === id
@@ -3387,6 +3445,8 @@ function StudioApp() {
   }
 
   function removeBlock(id) {
+    if (!blocks.some((block) => block.id === id)) return
+    recordEditorChange()
     // Spolu s blokem se odstrani i jeho docasny stav a individualni styl.
     setBlocks((prev) => prev.filter((block) => block.id !== id))
     setPreviewState((prev) => {
@@ -3404,6 +3464,24 @@ function StudioApp() {
     setSelectedBlockId((prevSelected) => (prevSelected === id ? null : prevSelected))
   }
 
+  function duplicateBlock(id) {
+    const sourceBlock = blocks.find((block) => block.id === id)
+    if (!sourceBlock) return
+
+    const duplicate = createBlockFromTemplate(sourceBlock, blocks.length)
+    recordEditorChange()
+    setBlocks((prev) => {
+      const sourceIndex = prev.findIndex((block) => block.id === id)
+      const next = [...prev]
+      next.splice(sourceIndex + 1, 0, duplicate)
+      return next
+    })
+    if (componentStyles[id]) {
+      setComponentStyles((prev) => ({ ...prev, [duplicate.id]: { ...prev[id] } }))
+    }
+    setSelectedBlockId(duplicate.id)
+  }
+
   function updatePreviewState(id, patch) {
     // Stav interaktivnich prvku je izolovan podle identifikatoru bloku.
     setPreviewState((prev) => ({
@@ -3416,6 +3494,8 @@ function StudioApp() {
   }
 
   function updateAppearance(name, value) {
+    if (appearance[name] === value) return
+    recordEditorChange()
     setAppearance((prev) => ({
       ...prev,
       [name]: value,
@@ -3424,7 +3504,9 @@ function StudioApp() {
 
   function updateSelectedComponentStyle(name, value) {
     if (!selectedBlockId) return
+    if (selectedStyle[name] === value) return
 
+    recordEditorChange()
     setComponentStyles((prev) => ({
       ...prev,
       [selectedBlockId]: {
@@ -3435,8 +3517,9 @@ function StudioApp() {
   }
 
   function resetSelectedComponentStyle() {
-    if (!selectedBlockId) return
+    if (!selectedBlockId || !componentStyles[selectedBlockId]) return
 
+    recordEditorChange()
     setComponentStyles((prev) => {
       const next = { ...prev }
       delete next[selectedBlockId]
@@ -3452,6 +3535,7 @@ function StudioApp() {
   function pasteToSelectedComponentStyle() {
     if (!selectedBlockId || !copiedComponentStyle) return
 
+    recordEditorChange()
     setComponentStyles((prev) => ({
       ...prev,
       [selectedBlockId]: {
@@ -3466,6 +3550,7 @@ function StudioApp() {
     const preset = COMPONENT_STYLE_PRESETS[presetKey]
     if (!preset) return
 
+    recordEditorChange()
     setComponentStyles((prev) => ({
       ...prev,
       [selectedBlockId]: {
@@ -3542,6 +3627,28 @@ function StudioApp() {
     })
   }, [blocks, backgroundId, customBackground, appearance, componentStyles])
 
+  useEffect(() => {
+    function handleHistoryShortcut(event) {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+
+      const key = event.key.toLowerCase()
+      if (key === 'z') {
+        event.preventDefault()
+        if (event.shiftKey) redoEditorChange()
+        else undoEditorChange()
+      } else if (key === 'y') {
+        event.preventDefault()
+        redoEditorChange()
+      }
+    }
+
+    window.addEventListener('keydown', handleHistoryShortcut)
+    return () => window.removeEventListener('keydown', handleHistoryShortcut)
+  })
+
+  const canUndo = undoStack.length > 0
+  const canRedo = redoStack.length > 0
+
   return (
     <div className="editor-layout">
       <aside className="editor-panel">
@@ -3549,6 +3656,15 @@ function StudioApp() {
         <p className="panel-muted">Toolbox je pro landing page (bez menu/tabs/breadcrumbs).</p>
 
         <div className="editor-meta">{blockCountLabel}</div>
+
+        <div className="history-actions" aria-label="Historie uprav">
+          <button type="button" disabled={!canUndo} onClick={undoEditorChange} title="Zpet (Ctrl+Z)">
+            ↶ Zpet
+          </button>
+          <button type="button" disabled={!canRedo} onClick={redoEditorChange} title="Znovu (Ctrl+Y)">
+            ↷ Znovu
+          </button>
+        </div>
 
         <div className="studio-actions">
           <button type="button" onClick={exportCurrentProjectSource}>
@@ -3576,7 +3692,7 @@ function StudioApp() {
                 key={option.id}
                 type="button"
                 className={option.id === backgroundId ? 'is-selected-bg' : undefined}
-                onClick={() => setBackgroundId(option.id)}
+                onClick={() => changeBackground(option.id)}
               >
                 {option.label}
               </button>
@@ -3584,7 +3700,7 @@ function StudioApp() {
             <button
               type="button"
               className={backgroundId === 'custom' ? 'is-selected-bg' : undefined}
-              onClick={() => setBackgroundId('custom')}
+              onClick={() => changeBackground('custom')}
             >
               Custom
             </button>
@@ -3596,7 +3712,7 @@ function StudioApp() {
                 id="custom-bg-input"
                 type="color"
                 value={customBackground}
-                onChange={(event) => setCustomBackground(event.target.value)}
+                onChange={(event) => changeCustomBackground(event.target.value)}
               />
             </div>
           )}
@@ -3750,35 +3866,6 @@ function StudioApp() {
           </div>
         </div>
 
-        <div className="block-list">
-          {hasBlocks ? (
-            blocks.map((block, index) => {
-              const component = COMPONENT_LIBRARY.find((item) => item.type === block.type)
-
-              return (
-                <section
-                  className={`block-editor ${block.id === selectedBlockId ? 'is-selected' : ''}`}
-                  key={block.id}
-                  onClick={() => setSelectedBlockId(block.id)}
-                >
-                  <div className="block-editor-head">
-                    <strong>
-                      {index + 1}. {component?.label ?? block.type}
-                    </strong>
-                    <button type="button" className="ghost-danger" onClick={() => removeBlock(block.id)}>
-                      Smazat
-                    </button>
-                  </div>
-                  <div className="block-fields">
-                    {renderEditorFields(block, (propName, value) => updateBlockProp(block.id, propName, value))}
-                  </div>
-                </section>
-              )
-            })
-          ) : (
-            <p className="panel-muted">Zatim tu nic neni. Pridat prvni blok.</p>
-          )}
-        </div>
       </aside>
 
       <section className="preview-shell">
@@ -3795,6 +3882,12 @@ function StudioApp() {
                   onClick={() => setSelectedBlockId(block.id)}
                 >
                   <div className="preview-component-label">{component?.label ?? block.type}</div>
+                  {block.id === selectedBlockId && (
+                    <div className="preview-component-actions" onClick={(event) => event.stopPropagation()}>
+                      <button type="button" onClick={() => duplicateBlock(block.id)}>Duplikovat</button>
+                      <button type="button" className="is-danger" onClick={() => removeBlock(block.id)}>Smazat</button>
+                    </div>
+                  )}
                   <div className="preview-component-body">
                     {renderPreviewBlock(block, previewState[block.id], (patch) =>
                       updatePreviewState(block.id, patch),
@@ -3816,6 +3909,15 @@ function StudioApp() {
                 Upravy pro: <strong>{selectedComponent?.label ?? selectedBlock.type}</strong>
               </p>
 
+              <div className="inspector-group inspector-content-editor">
+                <strong>Obsah</strong>
+                <div className="block-fields">
+                  {renderEditorFields(selectedBlock, (propName, value) =>
+                    updateBlockProp(selectedBlock.id, propName, value)
+                  )}
+                </div>
+              </div>
+
               <div className="inspector-actions">
                 <button type="button" onClick={resetSelectedComponentStyle}>
                   Reset stylu
@@ -3829,6 +3931,12 @@ function StudioApp() {
                   onClick={pasteToSelectedComponentStyle}
                 >
                   Paste styl
+                </button>
+                <button type="button" onClick={() => duplicateBlock(selectedBlock.id)}>
+                  Duplikovat
+                </button>
+                <button type="button" className="is-danger" onClick={() => removeBlock(selectedBlock.id)}>
+                  Smazat blok
                 </button>
               </div>
 
